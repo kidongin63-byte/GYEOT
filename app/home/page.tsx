@@ -2,12 +2,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Mic, Heart } from "lucide-react";
+import { Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, BarChart3, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Message {
     role: "user" | "ai";
@@ -16,10 +15,13 @@ interface Message {
 
 export default function HomePage() {
     const [messages, setMessages] = useState<Message[]>([
-        { role: "ai", content: "할머니~ 아침은 맛있게 드셨어요? 반디가 기다리고 있었어요! ✨" }
+        { role: "ai", content: "할머니~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨" }
     ]);
     const [input, setInput] = useState("");
+    const [isListening, setIsListening] = useState(false);
+    const [showKeyboard, setShowKeyboard] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("home");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -28,12 +30,14 @@ export default function HomePage() {
         }
     }, [messages]);
 
-    const handleSendMessage = async () => {
-        if (!input.trim() || isLoading) return;
+    const handleSendMessage = async (text?: string) => {
+        const messageToSend = text || input;
+        if (!messageToSend.trim() || isLoading) return;
 
-        const userMessage = input;
         setInput("");
-        setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+        setShowKeyboard(false);
+        setIsListening(false);
+        setMessages(prev => [...prev, { role: "user", content: messageToSend }]);
         setIsLoading(true);
 
         try {
@@ -41,66 +45,74 @@ export default function HomePage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId: "kim-grandma-01", // 실제 구현시에는 세션 정보 등 사용
-                    message: userMessage,
-                    guardianContact: "010-1234-5678" // 실제 구현시에는 사용자 프로필 연동
+                    userId: "kim-grandma-01",
+                    message: messageToSend,
+                    guardianContact: "010-1234-5678"
                 })
             });
 
             const data = await response.json();
             setMessages(prev => [...prev, { role: "ai", content: data.reply }]);
         } catch (error) {
-            console.error("Chat error:", error);
-            setMessages(prev => [...prev, { role: "ai", content: "죄송해요 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?" }]);
+            setMessages(prev => [...prev, { role: "ai", content: "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?" }]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    return (
-        <div className="flex flex-col h-[calc(100vh-140px)] p-4 space-y-4">
-            {/* 이주무관용 위험도 인디케이터 */}
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 px-3 py-1 bg-white border border-primary/20 rounded-full shadow-sm">
-                    <Heart className="w-4 h-4 text-primary fill-primary animate-pulse" />
-                    <span className="text-xs font-bold text-slate-600">반디가 함께해요</span>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-bold border border-green-200">
-                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-                    안전함
-                </div>
-            </div>
+    const toggleVoice = () => {
+        setIsListening(!isListening);
+    };
 
-            {/* 대화 영역 */}
-            <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-6">
+    return (
+        <div className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden">
+            {/* 상단 상태바 (간소화) */}
+            <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+                    <Heart className="w-5 h-5 text-primary fill-primary animate-pulse" />
+                    <span className="text-xs font-bold text-primary">반디 서비스 중</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-black border border-green-200">
+                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
+                    안전
+                </div>
+            </header>
+
+            {/* 대화 영역 (초대형 폰터) */}
+            <ScrollArea className="flex-1 px-4 py-4 hide-scrollbar">
+                <div className="space-y-8 max-w-lg mx-auto pb-40">
                     {messages.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <div className={`flex gap-3 max-w-[85%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                                <Avatar className="w-10 h-10 border-2 border-primary/10">
+                        <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                            <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                                <Avatar className={cn(
+                                    "w-12 h-12 border-2 shadow-sm",
+                                    msg.role === "ai" ? "border-primary/20 animate-float" : "border-slate-100"
+                                )}>
                                     <AvatarImage src={msg.role === "ai" ? "/gyeot.png" : ""} />
                                     <AvatarFallback className={msg.role === "ai" ? "bg-primary/10" : "bg-slate-200"}>
-                                        {msg.role === "ai" ? "✨" : "할미"}
+                                        {msg.role === "ai" ? <Sparkles className="w-6 h-6 text-primary" /> : <span className="text-lg font-bold">나</span>}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className={`p-4 rounded-3xl text-lg shadow-sm ${msg.role === "user"
-                                        ? "bg-primary text-white rounded-tr-none font-medium"
-                                        : "bg-white text-slate-800 rounded-tl-none border border-slate-100"
-                                    }`}>
+
+                                <div className={cn(
+                                    "p-4 rounded-[32px] text-xl md:text-2xl font-bold leading-tight shadow-lg max-w-[85%]",
+                                    msg.role === "user"
+                                        ? "bg-primary text-white rounded-br-none"
+                                        : "bg-white text-slate-800 rounded-tl-none border-2 border-primary/5"
+                                )}>
                                     {msg.content}
                                 </div>
                             </div>
                         </div>
                     ))}
+
                     {isLoading && (
-                        <div className="flex justify-start">
-                            <div className="flex gap-3 items-center">
-                                <Avatar className="w-10 h-10 border-2 border-primary/10 animate-pulse">
-                                    <AvatarFallback>✨</AvatarFallback>
-                                </Avatar>
-                                <div className="bg-slate-100 p-3 rounded-2xl text-sm italic text-slate-500">
-                                    반디가 생각하는 중...
-                                </div>
+                        <div className="flex items-center gap-4 animate-pulse opacity-70">
+                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                                <Sparkles className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="bg-slate-100 p-4 rounded-3xl text-lg font-bold text-slate-500">
+                                반디가 생각 중...
                             </div>
                         </div>
                     )}
@@ -108,31 +120,90 @@ export default function HomePage() {
                 </div>
             </ScrollArea>
 
-            {/* 입력 영역 */}
-            <div className="flex flex-col gap-3 pt-2">
-                <div className="flex gap-2 h-16">
-                    <Input
-                        className="flex-1 h-full rounded-2xl text-xl px-6 border-2 focus-visible:ring-primary shadow-inner"
-                        placeholder="반디에게 말을 건네보세요..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                    />
-                    <Button
-                        className="w-16 h-full rounded-2xl shadow-lg active:scale-95 transition-transform"
-                        onClick={handleSendMessage}
-                        disabled={isLoading}
-                    >
-                        <Send className="w-8 h-8" />
-                    </Button>
+            {/* 하단 컨트롤 레이어 (입력 및 내비게이션 통합) */}
+            <div className="absolute bottom-0 left-0 right-0 z-20">
+                {/* 1. 입력 영역 (Pulsing Mic) */}
+                <div className="px-6 py-6 bg-gradient-to-t from-white via-white to-transparent">
+                    {showKeyboard ? (
+                        <div className="flex gap-4 items-center bg-white p-2 rounded-full shadow-2xl border-2 border-primary/10 animate-in slide-in-from-bottom-2">
+                            <input
+                                autoFocus
+                                className="flex-1 h-16 bg-transparent px-6 text-xl font-bold outline-none"
+                                placeholder="글을 남겨보세요..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                            />
+                            <Button
+                                className="w-14 h-14 rounded-full"
+                                onClick={() => handleSendMessage()}
+                            >
+                                <Send className="w-6 h-6" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="relative group">
+                                {isListening && (
+                                    <>
+                                        <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-150" />
+                                        <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse scale-125" />
+                                    </>
+                                )}
+                                <Button
+                                    size="lg"
+                                    className={cn(
+                                        "w-36 h-36 rounded-full shadow-[0_15px_40px_rgba(var(--primary),0.3)] transition-all duration-500 relative z-30",
+                                        isListening ? "bg-red-500 ring-8 ring-red-100 scale-90" : "bg-primary hover:scale-105 active:scale-95"
+                                    )}
+                                    onClick={toggleVoice}
+                                >
+                                    {isListening ? (
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-12 h-1 bg-white rounded-full animate-pulse mb-2" />
+                                            <span className="text-xl font-black">듣는 중</span>
+                                        </div>
+                                    ) : (
+                                        <Mic className="w-20 h-20 text-white" />
+                                    )}
+                                </Button>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                className="text-slate-400 text-sm font-bold flex items-center gap-2 h-10 hover:bg-transparent"
+                                onClick={() => setShowKeyboard(true)}
+                            >
+                                <Keyboard className="w-4 h-4" />
+                                글자로 쓰기
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                <Button
-                    variant="secondary"
-                    className="w-full h-20 rounded-[30px] text-2xl font-black bg-primary/5 hover:bg-primary/10 text-primary border-4 border-primary/20 shadow-xl"
-                >
-                    <Mic className="w-8 h-8 mr-2" />
-                    크게 말하기
-                </Button>
+
+                {/* 2. 네이티브 하단 내비게이션 바 */}
+                <nav className="flex justify-around items-center h-20 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-6 pb-2">
+                    <button
+                        onClick={() => setActiveTab("home")}
+                        className={cn("flex flex-col items-center gap-1 transition-colors", activeTab === "home" ? "text-primary" : "text-slate-400")}
+                    >
+                        <MessageCircle className={cn("w-6 h-6", activeTab === "home" && "fill-primary/20")} />
+                        <span className="text-[10px] font-black uppercase">대화하기</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("report")}
+                        className={cn("flex flex-col items-center gap-1 transition-colors", activeTab === "report" ? "text-primary" : "text-slate-400")}
+                    >
+                        <BarChart3 className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase">리포트</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("emergency")}
+                        className={cn("flex flex-col items-center gap-1 transition-colors", activeTab === "emergency" ? "text-red-500" : "text-slate-400")}
+                    >
+                        <AlertCircle className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase tracking-tighter">긴급호출</span>
+                    </button>
+                </nav>
             </div>
         </div>
     );
