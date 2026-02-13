@@ -40,11 +40,15 @@ export const signInUserAnonymously = async () => {
  * 김할머니 정보, 동의 여부, AI 학습 기초 데이터를 저장합니다.
  */
 export const createUserProfile = async (userId: string, data: any) => {
-    return await updateDoc(doc(db, "users", userId), {
-        ...data,
-        agreedAt: serverTimestamp(), // 동의 시각 저장
-        status: "safe", // 초기 상태는 항상 '안전'
-    });
+    try {
+        return await updateDoc(doc(db, "users", userId), {
+            ...data,
+            agreedAt: serverTimestamp(), // 동의 시각 저장
+            status: "safe", // 초기 상태는 항상 '안전'
+        });
+    } catch (e) {
+        console.error("Firebase Error (createUserProfile):", e);
+    }
 };
 
 /**
@@ -52,12 +56,16 @@ export const createUserProfile = async (userId: string, data: any) => {
  * AI와 할머니의 따뜻한 대화를 저장합니다.
  */
 export const saveConversation = async (userId: string, message: string, sender: "user" | "ai") => {
-    return await addDoc(collection(db, "conversations"), {
-        userId,
-        message,
-        sender,
-        timestamp: serverTimestamp(),
-    });
+    try {
+        return await addDoc(collection(db, "conversations"), {
+            userId,
+            message,
+            sender,
+            timestamp: serverTimestamp(),
+        });
+    } catch (e) {
+        console.error("Firebase Error (saveConversation):", e);
+    }
 };
 
 /**
@@ -65,11 +73,25 @@ export const saveConversation = async (userId: string, message: string, sender: 
  * Level 1(주의), 2(경고), 3(위험)으로 구분합니다.
  */
 export const createAlert = async (userId: string, level: 1 | 2 | 3, reason: string) => {
-    return await addDoc(collection(db, "alerts"), {
-        userId,
-        level,
-        reason,
-        isResolved: false, // 이주무관이 확인했는지 여부
-        createdAt: serverTimestamp(),
-    });
+    try {
+        return await addDoc(collection(db, "alerts"), {
+            userId,
+            level,
+            reason,
+            isResolved: false, // 이주무관이 확인했는지 여부
+            createdAt: serverTimestamp(),
+        });
+    } catch (e) {
+        console.error("Firebase Error (createAlert):", e);
+    }
+};
+
+/**
+ * 4단계: 푸시 알림 전송 (FCM/가상)
+ * 실제 서비스 시 FCM 토큰 기반 발송으로 고도화가 필요합니다.
+ */
+export const sendPushNotification = async (target: string, title: string, body: string) => {
+    console.log(`[Push Notification] To: ${target} | Title: ${title} | Body: ${body}`);
+    // 실제 FCM 구현 시 이곳에 로직 추가
+    return { success: true, messageId: "simulated-id" };
 };

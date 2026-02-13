@@ -5,7 +5,10 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, BarChart3, AlertCircle } from "lucide-react";
+import {
+    Mic, Send, Keyboard, Heart, Sparkles, MessageCircle,
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -23,12 +26,13 @@ export default function HomePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
     const scrollRef = useRef<HTMLDivElement>(null);
+    const recognitionRef = useRef<any>(null);
 
     useEffect(() => {
-        if (scrollRef.current) {
+        if (scrollRef.current && activeTab === "home") {
             scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]);
+    }, [messages, activeTab]);
 
     const handleSendMessage = async (text?: string) => {
         const messageToSend = text || input;
@@ -61,12 +65,55 @@ export default function HomePage() {
     };
 
     const toggleVoice = () => {
-        setIsListening(!isListening);
+        if (typeof window === "undefined") return;
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("이 브라우저는 음성 인식을 지원하지 않습니다.");
+            return;
+        }
+
+        if (isListening) {
+            if (recognitionRef.current) recognitionRef.current.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            handleSendMessage(transcript);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("STT Error:", event.error);
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        try {
+            recognition.start();
+            recognitionRef.current = recognition;
+        } catch (error) {
+            console.error("STT Start Error:", error);
+            setIsListening(false);
+        }
     };
 
     return (
         <div className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden">
-            {/* 상단 상태바 (간소화) */}
+            {/* 상단 상태바 */}
             <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10">
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
                     <Heart className="w-5 h-5 text-primary fill-primary animate-pulse" />
@@ -74,113 +121,200 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-black border border-green-200">
                     <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
-                    안전
+                    {activeTab === "emergency" ? "응급 대기" : "안전"}
                 </div>
             </header>
 
-            {/* 대화 영역 (초대형 폰터) */}
-            <ScrollArea className="flex-1 px-4 py-4 hide-scrollbar">
-                <div className="space-y-8 max-w-lg mx-auto pb-40">
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                            <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                                <Avatar className={cn(
-                                    "w-12 h-12 border-2 shadow-sm",
-                                    msg.role === "ai" ? "border-primary/20 animate-float" : "border-slate-100"
-                                )}>
-                                    <AvatarImage src={msg.role === "ai" ? "/gyeot.png" : ""} />
-                                    <AvatarFallback className={msg.role === "ai" ? "bg-primary/10" : "bg-slate-200"}>
-                                        {msg.role === "ai" ? <Sparkles className="w-6 h-6 text-primary" /> : <span className="text-lg font-bold">나</span>}
-                                    </AvatarFallback>
-                                </Avatar>
+            {/* 메인 콘텐츠 영역 */}
+            <div className="flex-1 overflow-hidden relative">
+                {activeTab === "home" && (
+                    <ScrollArea className="h-full px-4 py-4 hide-scrollbar">
+                        <div className="space-y-8 max-w-lg mx-auto pb-64">
+                            {messages.map((msg, i) => (
+                                <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                                    <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                                        <Avatar className={cn(
+                                            "w-[70px] h-[70px] border-2 shadow-sm animate-float",
+                                            msg.role === "ai" ? "border-primary/20" : "border-slate-100"
+                                        )}>
+                                            <AvatarImage src={msg.role === "ai" ? "/gyeot.png" : ""} />
+                                            <AvatarFallback className={msg.role === "ai" ? "bg-primary/10" : "bg-slate-200"}>
+                                                {msg.role === "ai" ? <Sparkles className="w-6 h-6 text-primary" /> : <span className="text-lg font-bold">나</span>}
+                                            </AvatarFallback>
+                                        </Avatar>
 
-                                <div className={cn(
-                                    "p-4 rounded-[32px] text-xl md:text-2xl font-bold leading-tight shadow-lg max-w-[85%]",
-                                    msg.role === "user"
-                                        ? "bg-primary text-white rounded-br-none"
-                                        : "bg-white text-slate-800 rounded-tl-none border-2 border-primary/5"
-                                )}>
-                                    {msg.content}
+                                        <div className={cn(
+                                            "p-4 rounded-[32px] text-xl md:text-2xl font-bold leading-tight shadow-lg max-w-[85%] px-[20px] py-[10px]",
+                                            msg.role === "user"
+                                                ? "bg-primary !text-primary-foreground rounded-br-none"
+                                                : "bg-white text-slate-800 rounded-tl-none border-2 border-primary/5"
+                                        )}>
+                                            {msg.content}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {isLoading && (
+                                <div className="flex items-center gap-4 animate-pulse opacity-70">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                                        <Sparkles className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div className="bg-slate-100 p-4 rounded-3xl text-lg font-bold text-slate-500">
+                                        반디가 생각 중...
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={scrollRef} />
+                        </div>
+                    </ScrollArea>
+                )}
+
+                {activeTab === "report" && (
+                    <ScrollArea className="h-full px-6 py-8 hide-scrollbar">
+                        <div className="max-w-md mx-auto space-y-8 pb-32 font-bold text-slate-800">
+                            <h2 className="text-3xl font-black">오늘의 곁 리포트 📋</h2>
+
+                            <div className="bg-white p-6 rounded-[40px] shadow-xl border-4 border-primary/5 space-y-4">
+                                <div className="flex items-center gap-3 text-primary">
+                                    <Sparkles className="w-6 h-6" />
+                                    <span className="text-xl">반디의 요약</span>
+                                </div>
+                                <p className="text-2xl leading-relaxed text-slate-700">
+                                    "할머니, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-blue-50 p-6 rounded-[32px] border-2 border-blue-100 flex flex-col items-center gap-2">
+                                    <Activity className="w-8 h-8 text-blue-500" />
+                                    <span className="text-slate-500 text-sm">활동량</span>
+                                    <span className="text-2xl text-blue-700 font-black">충분함</span>
+                                </div>
+                                <div className="bg-green-50 p-6 rounded-[32px] border-2 border-green-100 flex flex-col items-center gap-2">
+                                    <Pill className="w-8 h-8 text-green-500" />
+                                    <span className="text-slate-500 text-sm">약 복용</span>
+                                    <span className="text-2xl text-green-700 font-black">완료</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-[32px] shadow-lg border border-slate-100 italic font-medium">
+                                <h3 className="text-xl mb-4 text-slate-600 font-black not-italic">오늘의 대화 패턴</h3>
+                                <div className="flex items-end gap-2 h-32 px-4 shadow-inner bg-slate-50 rounded-2xl pt-4">
+                                    {[30, 60, 45, 90, 70, 40, 80].map((h, i) => (
+                                        <div key={i} className="flex-1 bg-primary rounded-t-lg transition-all duration-1000" style={{ height: `${h}%` }} />
+                                    ))}
+                                </div>
+                                <div className="flex justify-between mt-2 text-xs text-slate-400 px-2 font-bold">
+                                    <span>오전</span><span>정오</span><span>오후</span>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    </ScrollArea>
+                )}
 
-                    {isLoading && (
-                        <div className="flex items-center gap-4 animate-pulse opacity-70">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-primary" />
+                {activeTab === "emergency" && (
+                    <div className="h-full px-6 py-12 flex flex-col items-center space-y-12">
+                        <div className="text-center space-y-2">
+                            <h2 className="text-4xl font-black text-red-600 animate-pulse">도움이 필요하신가요?</h2>
+                            <p className="text-xl font-bold text-slate-500 italic">아래 버튼을 3초간 꾹 눌러주세요</p>
+                        </div>
+
+                        <button className="w-64 h-64 bg-red-500 rounded-full shadow-[0_30px_60px_rgba(239,68,68,0.4)] border-[15px] border-red-100 active:scale-90 transition-transform flex flex-col items-center justify-center gap-2 group">
+                            <AlertCircle className="w-24 h-24 text-white group-active:animate-ping" />
+                            <span className="text-3xl font-black text-white">긴급출동</span>
+                        </button>
+
+                        <div className="w-full max-w-sm space-y-4">
+                            <div className="bg-white p-5 rounded-3xl shadow-md border-2 border-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                                        <Phone className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-400 font-bold">보호자 (박아들)</p>
+                                        <p className="text-xl font-black text-slate-700">010-1234-5678</p>
+                                    </div>
+                                </div>
+                                <Button size="sm" className="rounded-full bg-blue-500 font-black">전화</Button>
                             </div>
-                            <div className="bg-slate-100 p-4 rounded-3xl text-lg font-bold text-slate-500">
-                                반디가 생각 중...
+
+                            <div className="bg-white p-5 rounded-3xl shadow-md border-2 border-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+                                        <MapPin className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-400 font-bold">내 위치 확인</p>
+                                        <p className="text-lg font-black text-slate-700">집 (서울 종로구)</p>
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="rounded-full font-black">지도</Button>
                             </div>
                         </div>
-                    )}
-                    <div ref={scrollRef} />
-                </div>
-            </ScrollArea>
+                    </div>
+                )}
+            </div>
 
             {/* 하단 컨트롤 레이어 (입력 및 내비게이션 통합) */}
-            <div className="absolute bottom-0 left-0 right-0 z-20">
-                {/* 1. 입력 영역 (Pulsing Mic) */}
-                <div className="px-6 py-6 bg-gradient-to-t from-white via-white to-transparent">
-                    {showKeyboard ? (
-                        <div className="flex gap-4 items-center bg-white p-2 rounded-full shadow-2xl border-2 border-primary/10 animate-in slide-in-from-bottom-2">
-                            <input
-                                autoFocus
-                                className="flex-1 h-16 bg-transparent px-6 text-xl font-bold outline-none"
-                                placeholder="글을 남겨보세요..."
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                            />
-                            <Button
-                                className="w-14 h-14 rounded-full"
-                                onClick={() => handleSendMessage()}
-                            >
-                                <Send className="w-6 h-6" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="relative group">
-                                {isListening && (
-                                    <>
-                                        <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-150" />
-                                        <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse scale-125" />
-                                    </>
-                                )}
-                                <Button
-                                    size="lg"
-                                    className={cn(
-                                        "w-36 h-36 rounded-full shadow-[0_15px_40px_rgba(var(--primary),0.3)] transition-all duration-500 relative z-30",
-                                        isListening ? "bg-red-500 ring-8 ring-red-100 scale-90" : "bg-primary hover:scale-105 active:scale-95"
-                                    )}
-                                    onClick={toggleVoice}
-                                >
-                                    {isListening ? (
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-12 h-1 bg-white rounded-full animate-pulse mb-2" />
-                                            <span className="text-xl font-black">듣는 중</span>
-                                        </div>
-                                    ) : (
-                                        <Mic className="w-20 h-20 text-white" />
-                                    )}
+            <div className="bottom-0 left-0 right-0 z-20">
+                {activeTab === "home" && (
+                    <div className="px-6 py-6 bg-gradient-to-t from-white via-white to-transparent">
+                        {showKeyboard ? (
+                            <div className="flex gap-4 items-center bg-white p-2 rounded-full shadow-2xl border-2 border-primary/10 animate-in slide-in-from-bottom-2">
+                                <input
+                                    autoFocus
+                                    className="flex-1 h-16 bg-transparent px-6 text-xl font-bold outline-none"
+                                    placeholder="글을 남겨보세요..."
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                />
+                                <Button className="w-14 h-14 rounded-full" onClick={() => handleSendMessage()}>
+                                    <Send className="w-6 h-6" />
                                 </Button>
                             </div>
-                            <Button
-                                variant="ghost"
-                                className="text-slate-400 text-sm font-bold flex items-center gap-2 h-10 hover:bg-transparent"
-                                onClick={() => setShowKeyboard(true)}
-                            >
-                                <Keyboard className="w-4 h-4" />
-                                글자로 쓰기
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="relative group">
+                                    {isListening && (
+                                        <>
+                                            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-150" />
+                                            <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse scale-125" />
+                                        </>
+                                    )}
+                                    <Button
+                                        size="lg"
+                                        className={cn(
+                                            "w-36 h-36 rounded-full shadow-[0_15px_40px_rgba(var(--primary),0.3)] transition-all duration-500 relative z-30",
+                                            isListening ? "bg-red-500 ring-8 ring-red-100 scale-90" : "bg-primary hover:scale-105 active:scale-95"
+                                        )}
+                                        onClick={toggleVoice}
+                                    >
+                                        {isListening ? (
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-12 h-1 bg-white rounded-full animate-pulse mb-2" />
+                                                <span className="text-xl font-black">듣는 중</span>
+                                            </div>
+                                        ) : (
+                                            <Mic className="w-20 h-20 text-white" />
+                                        )}
+                                    </Button>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    className="text-slate-400 text-sm font-bold flex items-center gap-2 h-10 hover:bg-transparent"
+                                    onClick={() => setShowKeyboard(true)}
+                                >
+                                    <Keyboard className="w-4 h-4" />
+                                    글자로 쓰기
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                {/* 2. 네이티브 하단 내비게이션 바 */}
+                {/* 네이티브 하단 내비게이션 바 */}
                 <nav className="flex justify-around items-center h-20 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-6 pb-2">
                     <button
                         onClick={() => setActiveTab("home")}
