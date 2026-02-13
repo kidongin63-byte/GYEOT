@@ -1,12 +1,7 @@
-import withPWAInit from "@ducanh2912/next-pwa";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Turbopack 에러를 무시하고 설정을 비워둡니다.
+  transpilePackages: ["@ducanh2912/next-pwa"],
+};
 
-const withPWA = withPWAInit({
-  dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-});
-
-export default withPWA({
-  reactCompiler: true,
-  // 기존 설정이 있다면 여기에 추가
-});
+export default nextConfig;

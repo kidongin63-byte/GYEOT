@@ -1,6 +1,7 @@
 // app/page.tsx
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,8 +24,14 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex flex-col items-center p-6 space-y-8 animate-in fade-in duration-500">
-      <div className="w-48 h-48 bg-primary/20 rounded-full flex items-center justify-center text-6xl">
-        🤝
+      <div className="w-48 h-48 bg-primary/20 rounded-full flex items-center justify-center overflow-hidden shadow-inner">
+        <Image
+          src="/gyeot.png"  // public 폴더에 넣은 파일 이름과 똑같이 쓰세요!
+          alt="GYEOT 서비스 로고" // 이미지가 안 나올 때 뜰 설명
+          width={160}            // 이미지 너비 (픽셀)
+          height={160}           // 이미지 높이 (픽셀)
+          className="object-contain hover:scale-110 transition-transform" // 마우스 올리면 살짝 커지는 효과
+        />
       </div>
 
       <Card className="p-8 w-full text-center space-y-4 border-none shadow-sm">
