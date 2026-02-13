@@ -257,9 +257,9 @@ export default function HomePage() {
             </div>
 
             {/* 하단 컨트롤 레이어 (입력 및 내비게이션 통합) */}
-            <div className="bottom-0 left-0 right-0 z-20">
+            <div className="my-[15px]">
                 {activeTab === "home" && (
-                    <div className="px-6 py-6 bg-gradient-to-t from-white via-white to-transparent">
+                    <div className="px-6 py-6 mb-[10px] bg-gradient-to-t from-white via-white to-transparent">
                         {showKeyboard ? (
                             <div className="flex gap-4 items-center bg-white p-2 rounded-full shadow-2xl border-2 border-primary/10 animate-in slide-in-from-bottom-2">
                                 <input
@@ -275,7 +275,7 @@ export default function HomePage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex justify-around items-center max-w-[200px] mx-auto">
                                 <div className="relative group">
                                     {isListening && (
                                         <>
@@ -286,28 +286,28 @@ export default function HomePage() {
                                     <Button
                                         size="lg"
                                         className={cn(
-                                            "w-36 h-36 rounded-full shadow-[0_15px_40px_rgba(var(--primary),0.3)] transition-all duration-500 relative z-30",
+                                            "w-28 h-28 rounded-full shadow-[0_15px_40px_rgba(var(--primary),0.3)] transition-all duration-500 relative z-30",
                                             isListening ? "bg-red-500 ring-8 ring-red-100 scale-90" : "bg-primary hover:scale-105 active:scale-95"
                                         )}
                                         onClick={toggleVoice}
                                     >
                                         {isListening ? (
                                             <div className="flex flex-col items-center">
-                                                <div className="w-12 h-1 bg-white rounded-full animate-pulse mb-2" />
-                                                <span className="text-xl font-black">듣는 중</span>
+                                                <div className="w-10 h-1 bg-white rounded-full animate-pulse mb-2" />
+                                                <span className="text-lg font-black text-white">듣는 중</span>
                                             </div>
                                         ) : (
-                                            <Mic className="w-20 h-20 text-white" />
+                                            <Mic className="w-16 h-16 text-white" />
                                         )}
                                     </Button>
                                 </div>
                                 <Button
-                                    variant="ghost"
-                                    className="text-slate-400 text-sm font-bold flex items-center gap-2 h-10 hover:bg-transparent"
+                                    variant="outline"
+                                    className="h-28 px-8 rounded-[32px] border-2 border-slate-100 flex flex-col items-center justify-center gap-2 bg-white/50 hover:bg-white shadow-sm transition-all"
                                     onClick={() => setShowKeyboard(true)}
                                 >
-                                    <Keyboard className="w-4 h-4" />
-                                    글자로 쓰기
+                                    <Keyboard className="w-8 h-8 text-slate-400" />
+                                    <span className="text-lg font-black text-slate-600 leading-none text-center">글자로<br />쓰기</span>
                                 </Button>
                             </div>
                         )}
