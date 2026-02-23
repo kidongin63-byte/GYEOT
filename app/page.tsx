@@ -2,52 +2,71 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState(1);
   const router = useRouter();
 
-  const steps = [
-    { title: "환영해요!", desc: "저는 할머니의 건강을 지켜드리는 '곁'이에요." },
-    { title: "약속해요", desc: "도움이 필요할 때 가족에게 소식을 전해드려요." },
-    { title: "시작할까요?", desc: "아래 버튼을 누르면 저와 만날 수 있어요." },
-  ];
-
-  const nextStep = () => {
-    if (step < 3) setStep(step + 1);
-    else router.push("/home");
+  const handleStart = () => {
+    router.push("/home");
   };
 
   return (
-    <div className="flex flex-col items-center p-6 space-y-8 animate-in fade-in duration-500">
-      <div className="w-48 h-48 bg-primary/20 rounded-full flex items-center justify-center overflow-hidden shadow-inner">
-        <Image
-          src="/gyeot.png"  // public 폴더에 넣은 파일 이름과 똑같이 쓰세요!
-          alt="GYEOT 서비스 로고" // 이미지가 안 나올 때 뜰 설명
-          width={160}            // 이미지 너비 (픽셀)
-          height={160}           // 이미지 높이 (픽셀)
-          className="object-contain hover:scale-110 transition-transform" // 마우스 올리면 살짝 커지는 효과
-        />
+    <div className="flex flex-col items-center justify-center gap-12 h-[100dvh] py-8 px-6 animate-in fade-in duration-700 overflow-hidden">
+      {/* Top Section: Logo + Content */}
+      <div className="flex flex-col items-center space-y-2">
+        {/* Logo Section */}
+        <div className="relative w-44 h-44 flex items-center justify-center">
+          {/* Soft Glow Background */}
+          <div className="absolute inset-0 bg-brand-purple/5 blur-3xl rounded-full" />
+          <Image
+            src="/gyeot-logo.svg"
+            alt="GYEOT Service Logo"
+            width={150}
+            height={150}
+            className="relative object-contain drop-shadow-sm"
+          />
+        </div>
+
+        {/* Main Content Section */}
+        <div className="flex flex-col items-center space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight text-brand-purple font-nanum-myeongjo">
+            곁
+          </h1>
+          <p className="text-sm font-medium tracking-[0.2em] text-brand-purple/60">
+            G Y E O T
+          </p>
+          <p className="text-lg italic font-serif text-slate-500 mt-1 font-gowun-batang">
+            Warmth By Your Side
+          </p>
+
+          {/* Pagination Dots */}
+          <div className="flex space-x-2 mt-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-purple/20" />
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-purple/60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-purple/20" />
+          </div>
+        </div>
       </div>
 
-      <Card className="p-8 w-full text-center space-y-4 border-none shadow-sm">
-        <h2 className="text-3xl font-bold">{steps[step - 1].title}</h2>
-        <p className="text-xl text-slate-600 leading-relaxed">
-          {steps[step - 1].desc}
-        </p>
-      </Card>
+      {/* Action Section */}
+      <div className="w-full max-w-[260px] flex flex-col items-center space-y-3">
+        <Button
+          onClick={handleStart}
+          className="w-full h-12 text-lg font-semibold rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] hover:opacity-90 transition-all shadow-lg shadow-brand-purple/20 flex items-center justify-center gap-2"
+        >
+          Get Started <ArrowRight className="w-4 h-4" />
+        </Button>
 
-      <Button
-        size="lg"
-        className="w-full h-20 text-2xl font-bold rounded-3xl"
-        onClick={nextStep}
-      >
-        {step === 3 ? "확인했어요" : "네, 알겠어요"}
-      </Button>
+        <p className="text-[9px] tracking-[0.2em] text-slate-400 font-medium whitespace-nowrap">
+          ALWAYS BY YOUR SIDE
+        </p>
+      </div>
     </div>
+
+
+
   );
 }

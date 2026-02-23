@@ -1,7 +1,7 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, updateDoc, doc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
 // .env.local에 저장한 키값을 불러옵니다.
@@ -55,16 +55,40 @@ export const createUserProfile = async (userId: string, data: any) => {
  * 2단계: 대화 기록 저장 (conversations 컬렉션)
  * AI와 할머니의 따뜻한 대화를 저장합니다.
  */
-export const saveConversation = async (userId: string, message: string, sender: "user" | "ai") => {
+export const saveConversation = async (userId: string, message: string, sender: "user" | "ai", extraData?: any) => {
     try {
         return await addDoc(collection(db, "conversations"), {
             userId,
             message,
             sender,
             timestamp: serverTimestamp(),
+            ...extraData
         });
     } catch (e) {
         console.error("Firebase Error (saveConversation):", e);
+    }
+};
+
+/**
+ * 2.5단계: 최근 대화 내용 가져오기
+ * AI에게 이전 대화의 맥락(Memory)을 제공하기 위해 사용합니다.
+ */
+export const getRecentConversations = async (userId: string, count: number = 6) => {
+    try {
+        const q = query(
+            collection(db, "conversations"),
+            where("userId", "==", userId),
+            orderBy("timestamp", "desc"),
+            limit(count)
+        );
+        const querySnapshot = await getDocs(q);
+        // 최신순으로 가져오되, 다시 대화 순서대로(오름차순) 정렬하여 반환
+        return querySnapshot.docs
+            .map(doc => doc.data())
+            .reverse();
+    } catch (e) {
+        console.error("Firebase Error (getRecentConversations):", e);
+        return [];
     }
 };
 

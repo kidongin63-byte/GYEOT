@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Mic, Send, Keyboard, Heart, Sparkles, MessageCircle,
-    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +25,50 @@ export default function HomePage() {
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [selectedFont, setSelectedFont] = useState("font-nanum-gothic");
+    const [selectedVoice, setSelectedVoice] = useState<number>(0);
+    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
+
+    // TTS 설정
+    useEffect(() => {
+        const loadVoices = () => {
+            const allVoices = window.speechSynthesis.getVoices();
+            const korVoices = allVoices.filter(v => v.lang.includes("ko"));
+            setVoices(korVoices);
+        };
+
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // 로컬 설정 불러오기
+        const savedFont = localStorage.getItem("bandi-font");
+        const savedVoice = localStorage.getItem("bandi-voice");
+        if (savedFont) setSelectedFont(savedFont);
+        if (savedVoice) setSelectedVoice(parseInt(savedVoice));
+    }, []);
+
+    const speak = (text: string) => {
+        if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+        // 이전 발화 중지
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (voices[selectedVoice]) {
+            utterance.voice = voices[selectedVoice];
+        }
+        utterance.lang = "ko-KR";
+        utterance.rate = 0.9; // 어르신들을 위해 조금 천천히
+        utterance.pitch = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+    };
 
     useEffect(() => {
         if (scrollRef.current && activeTab === "home") {
@@ -57,8 +99,11 @@ export default function HomePage() {
 
             const data = await response.json();
             setMessages(prev => [...prev, { role: "ai", content: data.reply }]);
+            speak(data.reply); // 반디의 답변을 목소리로 읽어줍니다
         } catch (error) {
-            setMessages(prev => [...prev, { role: "ai", content: "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?" }]);
+            const errorMsg = "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?";
+            setMessages(prev => [...prev, { role: "ai", content: errorMsg }]);
+            speak(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -94,7 +139,13 @@ export default function HomePage() {
         };
 
         recognition.onerror = (event: any) => {
-            console.error("STT Error:", event.error);
+            if (event.error === "no-speech") {
+                // 무음 발생 시 조용히 종료
+                console.log("STT: No speech detected.");
+            } else {
+                console.error("STT Error:", event.error);
+                alert("음성 인식 오류: " + event.error);
+            }
             setIsListening(false);
         };
 
@@ -112,18 +163,122 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden">
+        <div className={cn("flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden transition-all duration-500", selectedFont)}>
             {/* 상단 상태바 */}
             <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10">
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
                     <Heart className="w-5 h-5 text-primary fill-primary animate-pulse" />
                     <span className="text-xs font-bold text-primary">반디 서비스 중</span>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-black border border-green-200">
-                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
-                    {activeTab === "emergency" ? "응급 대기" : "안전"}
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-black border border-green-200">
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
+                        {activeTab === "emergency" ? "응급 대기" : "안전"}
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full w-10 h-10 text-slate-400"
+                        onClick={() => setIsSettingsOpen(true)}
+                    >
+                        <Settings className="w-6 h-6" />
+                    </Button>
                 </div>
             </header>
+
+            {/* 설정 모달 */}
+            {isSettingsOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-6 bg-primary/5 flex justify-between items-center border-b border-primary/10">
+                            <h2 className="text-2xl font-black text-primary flex items-center gap-2">
+                                <Settings className="w-6 h-6" />
+                                반디 설정하기
+                            </h2>
+                            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSettingsOpen(false)}>
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
+
+                        <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh] hide-scrollbar">
+                            {/* 목소리 설정 */}
+                            <section className="space-y-4">
+                                <h3 className="text-lg font-black text-slate-700 flex items-center gap-2">
+                                    <Volume2 className="w-5 h-5" />
+                                    반디의 목소리 선택
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {voices.slice(0, 6).map((voice, idx) => (
+                                        <Button
+                                            key={idx}
+                                            variant={selectedVoice === idx ? "default" : "outline"}
+                                            className={cn(
+                                                "h-14 rounded-2xl font-bold transition-all",
+                                                selectedVoice === idx ? "bg-primary shadow-lg scale-105" : "hover:border-primary/50"
+                                            )}
+                                            onClick={() => {
+                                                setSelectedVoice(idx);
+                                                localStorage.setItem("bandi-voice", idx.toString());
+                                                // 즉시 테스트 발화
+                                                const testMsg = "반디 목소리예요!";
+                                                const utterance = new SpeechSynthesisUtterance(testMsg);
+                                                utterance.voice = voices[idx];
+                                                window.speechSynthesis.cancel();
+                                                window.speechSynthesis.speak(utterance);
+                                            }}
+                                        >
+                                            {voice.name.includes("Male") ? "👦 남성 " : "👧 여성 "}
+                                            소리 {idx + 1}
+                                        </Button>
+                                    ))}
+                                    {voices.length === 0 && (
+                                        <p className="col-span-2 text-sm text-slate-400 text-center font-bold">목소리를 불러오는 중입니다...</p>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* 글씨체 설정 */}
+                            <section className="space-y-4">
+                                <h3 className="text-lg font-black text-slate-700 flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5" />
+                                    글씨 모양 선택
+                                </h3>
+                                <div className="space-y-3">
+                                    {[
+                                        { id: "font-nanum-gothic", name: "표준 정석체 (나눔고딕)", class: "font-nanum-gothic" },
+                                        { id: "font-nanum-myeongjo", name: "인자한 명조체 (나눔명조)", class: "font-nanum-myeongjo" },
+                                        { id: "font-black-han-sans", name: "진하고 굵은체 (블랙한산스)", class: "font-black-han-sans" },
+                                        { id: "font-gowun-batang", name: "부드러운 바탕체 (고운바탕)", class: "font-gowun-batang" },
+                                        { id: "font-nanum-pen", name: "다정한 손글씨 (나눔펜)", class: "font-nanum-pen" }
+                                    ].map((font) => (
+                                        <Button
+                                            key={font.id}
+                                            variant={selectedFont === font.id ? "default" : "outline"}
+                                            className={cn(
+                                                "w-full h-16 rounded-2xl text-xl font-bold justify-start px-6",
+                                                font.class,
+                                                selectedFont === font.id ? "bg-primary shadow-lg border-transparent" : "hover:bg-slate-50"
+                                            )}
+                                            onClick={() => {
+                                                setSelectedFont(font.id);
+                                                localStorage.setItem("bandi-font", font.id);
+                                            }}
+                                        >
+                                            {font.name}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 text-center">
+                            <Button className="w-full h-16 rounded-2xl text-xl font-black bg-slate-800" onClick={() => setIsSettingsOpen(false)}>
+                                설정 완료
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 overflow-hidden relative">
