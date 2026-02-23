@@ -17,9 +17,274 @@ interface Message {
     content: string;
 }
 
+const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setInput: (val: string) => void, input: string }) => (
+    <div className="flex flex-col h-full bg-white animate-in slide-in-from-bottom-20 duration-500">
+        <header className="p-4 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
+            <Button
+                variant="ghost"
+                className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                onClick={() => setHomeView("dashboard")}
+            >
+                <ChevronLeft className="w-6 h-6" />
+                <span className="font-bold text-lg">이전</span>
+            </Button>
+            <div className="text-slate-800 font-black text-xl">메모 남기기</div>
+            <Button
+                variant="ghost"
+                className="text-brand-purple font-black text-lg"
+                onClick={() => {
+                    setHomeView("dashboard");
+                    setInput("");
+                }}
+            >
+                완료
+            </Button>
+        </header>
+
+        <div className="flex-1 p-8 flex flex-col space-y-6">
+            <div className="flex items-center gap-3 text-slate-400 mb-2">
+                <Pencil className="w-6 h-6" />
+                <span className="font-bold text-lg">현재 나를 메모해보세요</span>
+            </div>
+            <textarea
+                autoFocus
+                className="w-full flex-1 bg-slate-50/50 rounded-[32px] p-8 text-2xl font-bold border-2 border-dashed border-slate-200 outline-none focus:border-brand-purple/30 focus:bg-white transition-all resize-none leading-relaxed placeholder:text-slate-300"
+                placeholder="여기에 내용을 입력하세요..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+            />
+        </div>
+
+        <div className="p-8 pb-12 shrink-0">
+            <Button
+                onClick={() => {
+                    setHomeView("dashboard");
+                    setInput("");
+                }}
+                className="w-full h-18 rounded-full bg-brand-purple text-white text-2xl font-black shadow-lg shadow-brand-purple/20"
+            >
+                저장하고 돌아가기
+            </Button>
+        </div>
+    </div>
+);
+
+const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOpen }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setActiveTab: (tab: string) => void, toggleVoice: () => void, setIsSettingsOpen: (open: boolean) => void }) => (
+    <div className="flex flex-col h-full bg-[#FAFAFA] text-slate-800 animate-in fade-in duration-500">
+        <header className="p-6 flex justify-center items-center bg-transparent shrink-0">
+            <div className="text-slate-400 font-bold text-lg">곁이 함께하고 있어요</div>
+        </header>
+
+        <div className="flex-1 flex flex-col items-center justify-start pt-4 px-8 text-center overflow-y-auto hide-scrollbar">
+            <div className="relative mb-10 mt-2">
+                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '0s' }} />
+                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '1s' }} />
+                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '2s' }} />
+
+                <div className="relative w-44 h-44 bg-white/40 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner border border-white/50">
+                    <div className="w-28 h-28 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-45 overflow-hidden">
+                        <div className="transform -rotate-45 flex items-center justify-center p-3">
+                            <Image src="/gyeot-logo.svg" alt="Logo" width={90} height={90} className="object-contain" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-4 mb-8">
+                <h2 className="text-[28px] md:text-[32px] font-black leading-tight tracking-tight">
+                    지금 상태가<br />평소와 조금 다른 것 같아요
+                </h2>
+                <p className="text-[17px] text-slate-400 font-medium leading-relaxed">
+                    잠시 호흡을 가다듬고<br />
+                    상태를 확인해보는 건 어떨까요?
+                </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-brand-purple/10 text-brand-purple rounded-full text-[13px] font-black tracking-widest uppercase mb-12">
+                <div className="w-4.5 h-4.5 bg-brand-purple rounded-md flex items-center justify-center shadow-sm shadow-brand-purple/30">
+                    <BarChart3 className="w-3 h-3 text-white" />
+                </div>
+                LIVE ANALYSIS
+            </div>
+        </div>
+
+        <div className="dashboard-card bg-white p-10 pb-14 shadow-[0_-15px_40px_rgba(0,0,0,0.04)] animate-in slide-in-from-bottom-12 duration-700 shrink-0">
+            <div className="max-w-[340px] mx-auto w-full space-y-12">
+                <Button
+                    onClick={() => setHomeView("chat")}
+                    className="w-full h-20 rounded-[32px] bg-brand-purple hover:bg-brand-purple/95 text-white text-3xl font-black flex items-center justify-center gap-5 shadow-[0_12px_24px_rgba(161,99,241,0.25)] transition-all hover:scale-[1.02] active:scale-95"
+                >
+                    <MessageCircle className="w-8 h-8 fill-white/20" />
+                    대화하기
+                </Button>
+
+                <div className="grid grid-cols-2 gap-7">
+                    <Button
+                        variant="secondary"
+                        onClick={toggleVoice}
+                        className="h-18 rounded-[28px] bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-black text-xl border border-blue-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                    >
+                        <Mic className="w-6 h-6 text-blue-500" />
+                        음성/말하기
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setActiveTab("report")}
+                        className="h-18 rounded-[28px] bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 font-black text-xl border border-emerald-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                    >
+                        <BarChart3 className="w-6 h-6 text-emerald-500" />
+                        리포트
+                    </Button>
+                </div>
+
+                <button
+                    onClick={() => setHomeView("memo")}
+                    className="w-full relative group transition-all active:scale-[0.98]"
+                >
+                    <div className="absolute inset-0 bg-brand-purple/5 blur-xl group-hover:bg-brand-purple/10 transition-all rounded-[32px]" />
+                    <div className="relative flex items-center justify-between bg-slate-50/80 p-5 rounded-[32px] border-2 border-dashed border-slate-200/80 group-hover:border-brand-purple/40 group-hover:bg-white transition-all shadow-inner">
+                        <span className="text-xl font-bold text-slate-400 ml-2">글쓰기 메모 남기기...</span>
+                        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400">
+                            <Pencil className="w-6 h-6" />
+                        </div>
+                    </div>
+                </button>
+
+                <div className="pt-2 flex items-center gap-3">
+                    <Button
+                        onClick={() => setActiveTab("emergency")}
+                        className="flex-1 h-18 rounded-full bg-[#FFF5F5] hover:bg-red-100/50 text-[#FF4D4D] text-2xl font-black flex items-center justify-center gap-4 border border-red-100/30 shadow-sm transition-all active:scale-95"
+                    >
+                        <Sparkles className="w-7 h-7 fill-[#FF4D4D]/10" />
+                        긴급호출
+                    </Button>
+                    <Button
+                        onClick={() => setIsSettingsOpen(true)}
+                        variant="secondary"
+                        className="w-18 h-18 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 border border-slate-100 flex items-center justify-center transition-all active:scale-95"
+                    >
+                        <Settings className="w-8 h-8" />
+                    </Button>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, setHomeView, isListening, isLoading, scrollRef, userName }: { messages: Message[], input: string, setInput: (val: string) => void, handleSendMessage: (text?: string) => void, toggleVoice: () => void, setHomeView: (view: "dashboard" | "chat" | "memo") => void, isListening: boolean, isLoading: boolean, scrollRef: React.RefObject<HTMLDivElement | null>, userName: string }) => (
+    <div className="flex flex-col h-full bg-[#FDFCF8] animate-in slide-in-from-right-10 duration-500">
+        <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 border-b border-slate-100">
+            <Button
+                variant="ghost"
+                className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                onClick={() => setHomeView("dashboard")}
+            >
+                <ChevronLeft className="w-6 h-6" />
+                <span className="font-bold text-lg">이전</span>
+            </Button>
+            <div className="font-bold text-slate-700">반디와 대화</div>
+            <div className="w-16" />
+        </header>
+
+        <ScrollArea className="flex-1 px-3 py-3 hide-scrollbar">
+            <div className="space-y-8 max-w-[380px] mx-auto pb-16 px-1">
+                {messages.map((msg, i) => (
+                    <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                        <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                            <Avatar className={cn(
+                                "border-none shadow-none shrink-0",
+                                msg.role === "ai" ? "!w-[70px] !h-[70px] bg-transparent" : "!w-12 !h-12 bg-transparent"
+                            )}>
+                                <AvatarImage src={msg.role === "ai" ? "/gyeot-logo.svg" : ""} className="object-contain" />
+                                <AvatarFallback className={cn(
+                                    "rounded-full border-2",
+                                    msg.role === "ai" ? "bg-brand-purple/5 border-transparent" : "bg-green-50 border-green-200"
+                                )}>
+                                    {msg.role === "ai" ? (
+                                        <Sparkles className="w-6 h-6 text-brand-purple" />
+                                    ) : (
+                                        <span className={cn(
+                                            "font-black text-green-700",
+                                            userName.length > 2 ? "text-xs px-1" : "text-sm"
+                                        )}>
+                                            {userName}
+                                        </span>
+                                    )}
+                                </AvatarFallback>
+                            </Avatar>
+
+                            <div className={cn(
+                                "p-4 px-5 rounded-2xl font-bold leading-snug shadow-sm w-fit",
+                                msg.role === "user"
+                                    ? "bg-[#E8F5E9] text-[#1B5E20] border border-[#C8E6C9] rounded-br-none text-[18px] max-w-[calc(100%-60px)]"
+                                    : "bg-white text-slate-800 rounded-tl-none border border-slate-50 text-[18px] max-w-[calc(100%-85px)]"
+                            )}>
+                                {msg.content}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {isLoading && (
+                    <div className="flex items-center gap-2 animate-pulse opacity-70 mt-1">
+                        <div className="w-5 h-5 bg-brand-purple/5 rounded-full flex items-center justify-center">
+                            <Sparkles className="w-2.5 h-2.5 text-brand-purple" />
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl text-[13px] font-bold text-slate-400">
+                            반디가 생각 중...
+                        </div>
+                    </div>
+                )}
+                <div ref={scrollRef} />
+            </div>
+        </ScrollArea>
+
+        <div className="p-3 pb-8 bg-white border-t border-slate-100">
+            <div className="flex gap-2 items-center bg-slate-100/50 p-1 rounded-full border border-slate-200 focus-within:bg-white focus-within:border-brand-purple/30 transition-all z-20">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleVoice}
+                    className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0",
+                        isListening ? "bg-red-500 text-white animate-pulse" : "bg-white text-brand-purple shadow-sm"
+                    )}
+                >
+                    <Mic className="w-4 h-4" />
+                </Button>
+                <input
+                    autoFocus
+                    className="flex-1 h-10 bg-transparent px-2 text-[15px] font-bold outline-none text-slate-800 min-w-0"
+                    placeholder="메시지를 입력하세요..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleSendMessage();
+                        }
+                    }}
+                />
+                <Button
+                    size="icon"
+                    className="w-10 h-10 rounded-full bg-brand-purple hover:bg-brand-purple/90 shrink-0 transition-all active:scale-95 shadow-md flex items-center justify-center"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        handleSendMessage();
+                    }}
+                    disabled={!input.trim() || isLoading}
+                >
+                    <Send className="w-4 h-4 text-white" />
+                </Button>
+            </div>
+        </div>
+    </div>
+);
+
+
 export default function HomePage() {
+    const [userName, setUserName] = useState("대장");
     const [messages, setMessages] = useState<Message[]>([
-        { role: "ai", content: "할머니~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨" }
+        { role: "ai", content: `${userName}님~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨` }
     ]);
     const [input, setInput] = useState("");
     const [isListening, setIsListening] = useState(false);
@@ -50,8 +315,13 @@ export default function HomePage() {
 
         const savedFont = localStorage.getItem("bandi-font");
         const savedVoice = localStorage.getItem("bandi-voice");
+        const savedName = localStorage.getItem("bandi-user-name");
         if (savedFont) setSelectedFont(savedFont);
         if (savedVoice) setSelectedVoice(parseInt(savedVoice));
+        if (savedName) {
+            setUserName(savedName);
+            setMessages([{ role: "ai", content: `${savedName}님~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨` }]);
+        }
     }, []);
 
     const speak = (text: string) => {
@@ -86,6 +356,7 @@ export default function HomePage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     userId: "kim-grandma-01",
+                    userName: userName,
                     message: messageToSend,
                     guardianContact: "010-1234-5678"
                 })
@@ -124,258 +395,51 @@ export default function HomePage() {
         recognitionRef.current = recognition;
     };
 
-    const MemoView = () => (
-        <div className="flex flex-col h-full bg-white animate-in slide-in-from-bottom-20 duration-500">
-            <header className="p-6 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full bg-slate-50 border border-slate-100"
-                    onClick={() => setHomeView("dashboard")}
-                >
-                    <X className="w-6 h-6 text-slate-400" />
-                </Button>
-                <div className="text-slate-800 font-black text-xl">메모 남기기</div>
-                <Button
-                    variant="ghost"
-                    className="text-brand-purple font-black text-lg"
-                    onClick={() => {
-                        // Here you would typically save the note
-                        setHomeView("dashboard");
-                        setInput("");
-                    }}
-                >
-                    완료
-                </Button>
-            </header>
 
-            <div className="flex-1 p-8 flex flex-col space-y-6">
-                <div className="flex items-center gap-3 text-slate-400 mb-2">
-                    <Pencil className="w-6 h-6" />
-                    <span className="font-bold text-lg">현재 나를 메모해보세요</span>
-                </div>
-                <textarea
-                    autoFocus
-                    className="w-full flex-1 bg-slate-50/50 rounded-[32px] p-8 text-2xl font-bold border-2 border-dashed border-slate-200 outline-none focus:border-brand-purple/30 focus:bg-white transition-all resize-none leading-relaxed placeholder:text-slate-300"
-                    placeholder="여기에 내용을 입력하세요..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                />
-            </div>
-
-            <div className="p-8 pb-12 shrink-0">
-                <Button
-                    onClick={() => {
-                        setHomeView("dashboard");
-                        setInput("");
-                    }}
-                    className="w-full h-18 rounded-full bg-brand-purple text-white text-2xl font-black shadow-lg shadow-brand-purple/20"
-                >
-                    저장하고 돌아가기
-                </Button>
-            </div>
-        </div>
-    );
-
-    const DashboardView = () => (
-        <div className="flex flex-col h-full bg-[#FAFAFA] text-slate-800 animate-in fade-in duration-500">
-            {/* Dashboard Header - Simplified */}
-            <header className="p-6 flex justify-center items-center bg-transparent shrink-0">
-                <div className="text-slate-400 font-bold text-lg">곁이 함께하고 있어요</div>
-            </header>
-
-            {/* Main Status Area */}
-            <div className="flex-1 flex flex-col items-center justify-start pt-4 px-8 text-center overflow-y-auto hide-scrollbar">
-                {/* Visual Status Graphic */}
-                <div className="relative mb-10 mt-2">
-                    {/* Pulsing Rings */}
-                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '0s' }} />
-                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '1s' }} />
-                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '2s' }} />
-
-                    <div className="relative w-44 h-44 bg-white/40 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner border border-white/50">
-                        <div className="w-28 h-28 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-45 overflow-hidden">
-                            <div className="transform -rotate-45 flex items-center justify-center p-3">
-                                <Image src="/gyeot-logo.svg" alt="Logo" width={90} height={90} className="object-contain" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                    <h2 className="text-[28px] md:text-[32px] font-black leading-tight tracking-tight">
-                        지금 상태가<br />평소와 조금 다른 것 같아요
-                    </h2>
-                    <p className="text-[17px] text-slate-400 font-medium leading-relaxed">
-                        잠시 호흡을 가다듬고<br />
-                        상태를 확인해보는 건 어떨까요?
-                    </p>
-                </div>
-
-                <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-brand-purple/10 text-brand-purple rounded-full text-[13px] font-black tracking-widest uppercase mb-12">
-                    <div className="w-4.5 h-4.5 bg-brand-purple rounded-md flex items-center justify-center shadow-sm shadow-brand-purple/30">
-                        <BarChart3 className="w-3 h-3 text-white" />
-                    </div>
-                    LIVE ANALYSIS
-                </div>
-            </div>
-
-            {/* Actions Card (Fixed at bottom) */}
-            <div className="dashboard-card bg-white p-10 pb-14 shadow-[0_-15px_40px_rgba(0,0,0,0.04)] animate-in slide-in-from-bottom-12 duration-700 shrink-0">
-                <div className="max-w-[340px] mx-auto w-full space-y-12">
-                    <Button
-                        onClick={() => setHomeView("chat")}
-                        className="w-full h-20 rounded-[32px] bg-brand-purple hover:bg-brand-purple/95 text-white text-3xl font-black flex items-center justify-center gap-5 shadow-[0_12px_24px_rgba(161,99,241,0.25)] transition-all hover:scale-[1.02] active:scale-95"
-                    >
-                        <MessageCircle className="w-8 h-8 fill-white/20" />
-                        대화하기
-                    </Button>
-
-                    <div className="grid grid-cols-2 gap-7">
-                        <Button
-                            variant="secondary"
-                            onClick={toggleVoice}
-                            className="h-18 rounded-[28px] bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-black text-xl border border-blue-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
-                        >
-                            <Mic className="w-6 h-6 text-blue-500" />
-                            음성/말하기
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => setActiveTab("report")}
-                            className="h-18 rounded-[28px] bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 font-black text-xl border border-emerald-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
-                        >
-                            <BarChart3 className="w-6 h-6 text-emerald-500" />
-                            리포트
-                        </Button>
-                    </div>
-
-                    <button
-                        onClick={() => setHomeView("memo")}
-                        className="w-full relative group transition-all active:scale-[0.98]"
-                    >
-                        <div className="absolute inset-0 bg-brand-purple/5 blur-xl group-hover:bg-brand-purple/10 transition-all rounded-[32px]" />
-                        <div className="relative flex items-center justify-between bg-slate-50/80 p-5 rounded-[32px] border-2 border-dashed border-slate-200/80 group-hover:border-brand-purple/40 group-hover:bg-white transition-all shadow-inner">
-                            <span className="text-xl font-bold text-slate-400 ml-2">글쓰기 메모 남기기...</span>
-                            <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400">
-                                <Pencil className="w-6 h-6" />
-                            </div>
-                        </div>
-                    </button>
-
-                    <div className="pt-2 flex items-center gap-3">
-                        <Button
-                            onClick={() => setActiveTab("emergency")}
-                            className="flex-1 h-18 rounded-full bg-[#FFF5F5] hover:bg-red-100/50 text-[#FF4D4D] text-2xl font-black flex items-center justify-center gap-4 border border-red-100/30 shadow-sm transition-all active:scale-95"
-                        >
-                            <Sparkles className="w-7 h-7 fill-[#FF4D4D]/10" />
-                            긴급호출
-                        </Button>
-                        <Button
-                            onClick={() => setIsSettingsOpen(true)}
-                            variant="secondary"
-                            className="w-18 h-18 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 border border-slate-100 flex items-center justify-center transition-all active:scale-95"
-                        >
-                            <Settings className="w-8 h-8" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const ChatView = () => (
-        <div className="flex flex-col h-full bg-[#FDFCF8] animate-in slide-in-from-right-10 duration-500">
-            <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 border-b border-slate-100">
-                <Button variant="ghost" size="icon" onClick={() => setHomeView("dashboard")} className="rounded-full">
-                    <X className="w-6 h-6 text-slate-400" />
-                </Button>
-                <div className="font-bold text-slate-700">반디와 대화</div>
-                <div className="w-10" />
-            </header>
-
-            <ScrollArea className="flex-1 px-4 py-6 hide-scrollbar">
-                <div className="space-y-8 max-w-lg mx-auto pb-32">
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                            <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                                <Avatar className={cn(
-                                    "w-16 h-16 border-2 shadow-sm animate-float",
-                                    msg.role === "ai" ? "border-brand-purple/20" : "border-slate-100"
-                                )}>
-                                    <AvatarImage src={msg.role === "ai" ? "/gyeot-logo.svg" : ""} />
-                                    <AvatarFallback className={msg.role === "ai" ? "bg-brand-purple/10" : "bg-slate-200"}>
-                                        {msg.role === "ai" ? <Sparkles className="w-6 h-6 text-brand-purple" /> : <span className="text-lg font-bold">나</span>}
-                                    </AvatarFallback>
-                                </Avatar>
-
-                                <div className={cn(
-                                    "p-4 rounded-3xl text-xl font-bold leading-tight shadow-md max-w-[80%]",
-                                    msg.role === "user"
-                                        ? "bg-brand-purple text-white rounded-br-none"
-                                        : "bg-white text-slate-800 rounded-tl-none border border-slate-100"
-                                )}>
-                                    {msg.content}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    {isLoading && (
-                        <div className="flex items-center gap-4 animate-pulse opacity-70">
-                            <div className="w-12 h-12 bg-brand-purple/10 rounded-full flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-brand-purple" />
-                            </div>
-                            <div className="bg-slate-100 p-4 rounded-3xl text-lg font-bold text-slate-500">
-                                반디가 생각 중...
-                            </div>
-                        </div>
-                    )}
-                    <div ref={scrollRef} />
-                </div>
-            </ScrollArea>
-
-            <div className="p-6 bg-white border-t border-slate-100">
-                <div className="flex gap-4 items-center bg-slate-50 p-2 rounded-full border-2 border-slate-200">
-                    <button
-                        onClick={toggleVoice}
-                        className={cn(
-                            "w-14 h-14 rounded-full flex items-center justify-center transition-all",
-                            isListening ? "bg-red-500 text-white animate-pulse" : "bg-white text-brand-purple shadow-sm"
-                        )}
-                    >
-                        <Mic className="w-6 h-6" />
-                    </button>
-                    <input
-                        className="flex-1 h-14 bg-transparent px-4 text-lg font-bold outline-none"
-                        placeholder="말씀해 보세요..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                    />
-                    <Button className="w-14 h-14 rounded-full bg-brand-purple" onClick={() => handleSendMessage()}>
-                        <Send className="w-6 h-6" />
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
 
     return (
         <div className={cn("flex flex-col h-[100dvh] bg-white relative overflow-hidden transition-all duration-500", selectedFont)}>
             <div className="flex-1 overflow-hidden relative">
                 {activeTab === "home" && (
-                    homeView === "dashboard" ? <DashboardView /> :
-                        homeView === "chat" ? <ChatView /> : <MemoView />
+                    homeView === "dashboard" ? <DashboardView
+                        setHomeView={setHomeView}
+                        setActiveTab={setActiveTab}
+                        toggleVoice={toggleVoice}
+                        setIsSettingsOpen={setIsSettingsOpen}
+                    /> :
+                        homeView === "chat" ? <ChatView
+                            messages={messages}
+                            input={input}
+                            setInput={setInput}
+                            handleSendMessage={handleSendMessage}
+                            toggleVoice={toggleVoice}
+                            setHomeView={setHomeView}
+                            isListening={isListening}
+                            isLoading={isLoading}
+                            scrollRef={scrollRef}
+                            userName={userName}
+                        /> :
+                            <MemoView
+                                setHomeView={setHomeView}
+                                setInput={setInput}
+                                input={input}
+                            />
                 )}
 
                 {activeTab === "report" && (
-                    <ScrollArea className="h-full px-6 py-8 hide-scrollbar bg-[#FAFAFA]">
+                    <ScrollArea className="h-full px-4 py-6 hide-scrollbar bg-[#FAFAFA]">
                         <div className="max-w-md mx-auto space-y-8 pb-32">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-3xl font-black text-slate-800">오늘의 곁 리포트 📋</h2>
-                                <Button variant="ghost" size="icon" onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }} className="rounded-full">
-                                    <X className="w-6 h-6 text-slate-400" />
+                                <Button
+                                    variant="ghost"
+                                    className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                                    onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }}
+                                >
+                                    <ChevronLeft className="w-6 h-6" />
+                                    <span className="font-bold text-lg">이전</span>
                                 </Button>
+                                <h2 className="text-2xl font-black text-slate-800">곁 리포트</h2>
+                                <div className="w-16" />
                             </div>
 
                             <div className="bg-white p-8 rounded-[40px] shadow-xl border-2 border-brand-purple/5 space-y-4">
@@ -417,13 +481,18 @@ export default function HomePage() {
                 )}
 
                 {activeTab === "emergency" && (
-                    <div className="h-full px-6 py-12 flex flex-col items-center space-y-12 bg-white animate-in slide-in-from-bottom-20 duration-500">
+                    <div className="h-full px-6 py-8 flex flex-col items-center space-y-12 bg-white animate-in slide-in-from-bottom-20 duration-500">
                         <header className="w-full flex justify-between items-center bg-transparent mb-4">
-                            <Button variant="ghost" size="icon" onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }} className="rounded-full bg-slate-50 border border-slate-100">
-                                <X className="w-6 h-6 text-slate-400" />
+                            <Button
+                                variant="ghost"
+                                className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                                onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }}
+                            >
+                                <ChevronLeft className="w-6 h-6" />
+                                <span className="font-bold text-lg">이전</span>
                             </Button>
                             <div className="font-bold text-slate-700 text-lg">긴급 상황</div>
-                            <div className="w-10" />
+                            <div className="w-16" />
                         </header>
                         <div className="text-center space-y-4">
                             <h2 className="text-4xl font-black text-red-600 animate-pulse">도움이 필요하신가요?</h2>
@@ -485,6 +554,29 @@ export default function HomePage() {
                         </div>
 
                         <div className="p-8 space-y-10 overflow-y-auto max-h-[60vh] hide-scrollbar">
+                            <section className="space-y-6">
+                                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                                    <Heart className="w-6 h-6 text-brand-purple" />
+                                    나의 호칭 설정
+                                </h3>
+                                <div className="space-y-4">
+                                    <p className="text-sm font-bold text-slate-400 px-1">
+                                        반디가 저를 뭐라고 부르면 좋을까요?
+                                    </p>
+                                    <input
+                                        type="text"
+                                        className="w-full h-16 rounded-3xl bg-slate-50 px-6 text-xl font-black border-2 border-slate-100 focus:border-brand-purple/30 focus:bg-white outline-none transition-all"
+                                        placeholder="호칭을 입력하세요 (예: 대장, 할머니)"
+                                        value={userName}
+                                        onChange={(e) => {
+                                            const newName = e.target.value.slice(0, 10);
+                                            setUserName(newName);
+                                            localStorage.setItem("bandi-user-name", newName);
+                                        }}
+                                    />
+                                </div>
+                            </section>
+
                             <section className="space-y-6">
                                 <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
                                     <Volume2 className="w-6 h-6 text-brand-purple" />
