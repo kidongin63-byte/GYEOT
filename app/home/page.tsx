@@ -417,7 +417,14 @@ export default function HomePage() {
                 )}
 
                 {activeTab === "emergency" && (
-                    <div className="h-full px-6 py-12 flex flex-col items-center space-y-12 bg-white">
+                    <div className="h-full px-6 py-12 flex flex-col items-center space-y-12 bg-white animate-in slide-in-from-bottom-20 duration-500">
+                        <header className="w-full flex justify-between items-center bg-transparent mb-4">
+                            <Button variant="ghost" size="icon" onClick={() => setActiveTab("home")} className="rounded-full bg-slate-50 border border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </Button>
+                            <div className="font-bold text-slate-700 text-lg">긴급 상황</div>
+                            <div className="w-10" />
+                        </header>
                         <div className="text-center space-y-4">
                             <h2 className="text-4xl font-black text-red-600 animate-pulse">도움이 필요하신가요?</h2>
                             <p className="text-xl font-bold text-slate-400">아래 버튼을 3초간 꾹 눌러주세요</p>
@@ -474,24 +481,6 @@ export default function HomePage() {
                         <MessageCircle className={cn("w-7 h-7", activeTab === "home" && "fill-brand-purple")} />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest">홈</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab("report")}
-                    className={cn("flex flex-col items-center gap-1 transition-all duration-300", activeTab === "report" ? "text-brand-purple scale-110" : "text-slate-300")}
-                >
-                    <div className={cn("p-2 rounded-2xl transition-all", activeTab === "report" ? "bg-brand-purple/10" : "")}>
-                        <BarChart3 className="w-7 h-7" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">리포트</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab("emergency")}
-                    className={cn("flex flex-col items-center gap-1 transition-all duration-300", activeTab === "emergency" ? "text-red-500 scale-110" : "text-slate-300")}
-                >
-                    <div className={cn("p-2 rounded-2xl transition-all", activeTab === "emergency" ? "bg-red-50/50" : "")}>
-                        <AlertCircle className="w-7 h-7" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">긴급</span>
                 </button>
                 <button
                     onClick={() => setIsSettingsOpen(true)}
