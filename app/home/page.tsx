@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import {
     Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, Pencil,
-    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -76,15 +76,17 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-start pt-4 px-8 text-center overflow-y-auto hide-scrollbar">
-            <div className="relative mb-10 mt-2">
-                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '0s' }} />
-                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '1s' }} />
-                <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '2s' }} />
+            <div className="mb-10 mt-2 flex justify-center w-full">
+                <div className="relative w-44 h-44">
+                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '0s' }} />
+                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '1s' }} />
+                    <div className="absolute inset-0 bg-brand-purple/10 rounded-full animate-pulse-ring" style={{ animationDelay: '2s' }} />
 
-                <div className="relative w-44 h-44 bg-white/40 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner border border-white/50">
-                    <div className="w-28 h-28 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-45 overflow-hidden">
-                        <div className="transform -rotate-45 flex items-center justify-center p-3">
-                            <Image src="/gyeot-logo.svg" alt="Logo" width={90} height={90} className="object-contain" />
+                    <div className="relative w-full h-full bg-white/40 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner border border-white/50">
+                        <div className="w-28 h-28 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-45 overflow-hidden">
+                            <div className="transform -rotate-45 flex items-center justify-center p-3">
+                                <Image src="/gyeot-logo.svg" alt="Logo" width={90} height={90} className="object-contain" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -187,9 +189,9 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
         </header>
 
         <ScrollArea className="flex-1 px-3 py-3 hide-scrollbar">
-            <div className="space-y-8 max-w-[380px] mx-auto pb-16 px-1">
+            <div className="space-y-20 max-w-[380px] mx-auto pb-16 px-1">
                 {messages.map((msg, i) => (
-                    <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                    <div key={i} className={`flex flex-col mb-[20px] ${msg.role === "user" ? "items-end" : "items-start"}`}>
                         <div className={`flex items-end gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                             <Avatar className={cn(
                                 "border-none shadow-none shrink-0",
@@ -216,8 +218,8 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                             <div className={cn(
                                 "p-4 px-5 rounded-2xl font-bold leading-snug shadow-sm w-fit",
                                 msg.role === "user"
-                                    ? "bg-[#E8F5E9] text-[#1B5E20] border border-[#C8E6C9] rounded-br-none text-[18px] max-w-[calc(100%-60px)]"
-                                    : "bg-white text-slate-800 rounded-tl-none border border-slate-50 text-[18px] max-w-[calc(100%-85px)]"
+                                    ? "bg-[#E8F5E9] text-[#1B5E20] border border-[#C8E6C9] rounded-br-none text-[18px] max-w-[100%] mr-[10px] p-[7px]"
+                                    : "bg-white text-slate-800 rounded-tl-none border border-slate-50 text-[18px] max-w-[100%] p-[7px]"
                             )}>
                                 {msg.content}
                             </div>
@@ -301,11 +303,25 @@ export default function HomePage() {
     const recognitionRef = useRef<any>(null);
 
     // TTS 설정
+    const [femaleVoices, setFemaleVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [maleVoices, setMaleVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [selectedVoiceType, setSelectedVoiceType] = useState<"female" | "male">("female");
+    const [voiceIndex, setVoiceIndex] = useState(0);
+
     useEffect(() => {
         const loadVoices = () => {
             const allVoices = window.speechSynthesis.getVoices();
             const korVoices = allVoices.filter(v => v.lang.includes("ko"));
-            setVoices(korVoices);
+
+            // 단순 인덱스 방식이 브라우저마다 다르므로, 뉘앙스로 구분 시도
+            // (보통 이름에 'Dami', 'Heami' 등은 여성, 'Jinhwan' 등은 남성인 경우가 많음)
+            const females = korVoices.filter(v =>
+                v.name.includes("Dami") || v.name.includes("Heami") || v.name.includes("Sun-Hi") || v.name.includes("Hye-Hyeon") || !v.name.includes("Jinhwan")
+            );
+            const males = korVoices.filter(v => v.name.includes("Jinhwan") || v.name.includes("Kwang-Ho"));
+
+            setFemaleVoices(females);
+            setMaleVoices(males);
         };
 
         loadVoices();
@@ -314,10 +330,15 @@ export default function HomePage() {
         }
 
         const savedFont = localStorage.getItem("bandi-font");
-        const savedVoice = localStorage.getItem("bandi-voice");
+        const savedVoiceConfig = localStorage.getItem("bandi-voice-config"); // { type: 'female', index: 0 }
         const savedName = localStorage.getItem("bandi-user-name");
+
         if (savedFont) setSelectedFont(savedFont);
-        if (savedVoice) setSelectedVoice(parseInt(savedVoice));
+        if (savedVoiceConfig) {
+            const config = JSON.parse(savedVoiceConfig);
+            setSelectedVoiceType(config.type);
+            setVoiceIndex(config.index);
+        }
         if (savedName) {
             setUserName(savedName);
             setMessages([{ role: "ai", content: `${savedName}님~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨` }]);
@@ -328,7 +349,12 @@ export default function HomePage() {
         if (typeof window === "undefined" || !window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        if (voices[selectedVoice]) utterance.voice = voices[selectedVoice];
+
+        const targetVoices = selectedVoiceType === "female" ? femaleVoices : maleVoices;
+        if (targetVoices[voiceIndex]) {
+            utterance.voice = targetVoices[voiceIndex];
+        }
+
         utterance.lang = "ko-KR";
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
@@ -427,52 +453,68 @@ export default function HomePage() {
                 )}
 
                 {activeTab === "report" && (
-                    <ScrollArea className="h-full px-4 py-6 hide-scrollbar bg-[#FAFAFA]">
-                        <div className="max-w-md mx-auto space-y-8 pb-32">
-                            <div className="flex justify-between items-center">
+                    <ScrollArea className="h-full px-5 py-8 hide-scrollbar bg-white">
+                        <div className="max-w-md mx-auto space-y-6 pb-32">
+                            <div className="flex items-center justify-between mb-8 relative">
                                 <Button
                                     variant="ghost"
-                                    className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                                    className="flex items-center gap-1 px-2 -ml-2 text-[#465166] hover:bg-slate-50 rounded-xl z-10"
                                     onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }}
                                 >
-                                    <ChevronLeft className="w-6 h-6" />
-                                    <span className="font-bold text-lg">이전</span>
+                                    <ChevronLeft className="w-5 h-5 -ml-1" />
+                                    <span className="font-bold text-[15px]">이전</span>
                                 </Button>
-                                <h2 className="text-2xl font-black text-slate-800">곁 리포트</h2>
-                                <div className="w-16" />
+                                <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
+                                    <h2 className="text-[18px] font-black text-slate-800 tracking-tight">곁리포트</h2>
+                                </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-[40px] shadow-xl border-2 border-brand-purple/5 space-y-4">
-                                <div className="flex items-center gap-3 text-brand-purple">
-                                    <Sparkles className="w-6 h-6" />
-                                    <span className="text-xl font-black">반디의 요약</span>
+                            <div className="bg-[#F8F6FC] p-[10px] mt-[15px] mb-[10px] rounded-[32px] flex flex-col space-y-5 shadow-sm border border-purple-100/30">
+                                <div className="flex items-center gap-2 text-brand-purple pt-[10px]">
+                                    <div className="w-9 h-9 bg-brand-purple rounded-full flex justify-center items-center shadow-sm">
+                                        <Sparkles className="w-4 h-4 text-white" />
+                                    </div>
+                                    <span className="text-[20px] font-black tracking-tight">&nbsp;반디의 요약</span>
                                 </div>
-                                <p className="text-2xl font-bold leading-relaxed text-slate-700">
+                                <p className="text-[18px] font-bold leading-[1.8] text-slate-800 tracking-normal min-h-[5rem] px-[10px]">
                                     "할머니, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-center gap-2">
-                                    <Activity className="w-8 h-8 text-blue-500" />
-                                    <span className="text-slate-500 text-sm font-bold">활동량</span>
-                                    <span className="text-2xl text-slate-800 font-black">충분함</span>
+                            <div className="grid grid-cols-2 gap-4 mb-[10px]">
+                                <div className="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-2 h-[150px]">
+                                    <div className="w-11 h-11 bg-blue-50 rounded-full flex justify-center items-center mb-1">
+                                        <Zap className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+                                    </div>
+                                    <span className="text-slate-400 text-[13px] font-bold">활동량</span>
+                                    <span className="text-[16px] text-slate-800 font-black">충분함</span>
                                 </div>
-                                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-center gap-2">
-                                    <Pill className="w-8 h-8 text-green-500" />
-                                    <span className="text-slate-500 text-sm font-bold">약 복용</span>
-                                    <span className="text-2xl text-slate-800 font-black">완료</span>
+                                <div className="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-2 h-[150px]">
+                                    <div className="w-11 h-11 bg-emerald-50 rounded-full flex justify-center items-center mb-1">
+                                        <SlidersHorizontal className="w-5 h-5 text-emerald-500" />
+                                    </div>
+                                    <span className="text-slate-400 text-[13px] font-bold">약 복용</span>
+                                    <span className="text-[16px] text-slate-800 font-black">완료</span>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-[32px] shadow-lg border border-slate-100">
-                                <h3 className="text-xl mb-6 text-slate-800 font-black">오늘의 대화 패턴</h3>
-                                <div className="flex items-end gap-3 h-32 px-4 shadow-inner bg-slate-50/50 rounded-2xl pt-4">
-                                    {[30, 60, 45, 90, 70, 40, 80].map((h, i) => (
-                                        <div key={i} className="flex-1 bg-brand-purple/40 hover:bg-brand-purple rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }} />
-                                    ))}
+                            <div className="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 mt-2">
+                                <h3 className="text-[20px] p-[10px] pl-[20px] mb-8 text-slate-800 font-black tracking-tight" style={{ textShadow: "0 0 1px rgba(0,0,0,0.1)" }}>오늘의 대화 패턴</h3>
+                                <div className="relative h-28 mt-2 mx-2">
+                                    <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+                                        <defs>
+                                            <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                                                <stop offset="0%" stopColor="#A855F7" stopOpacity="0.15" />
+                                                <stop offset="100%" stopColor="#A855F7" stopOpacity="0" />
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M0,35 C15,10 25,18 30,25 C45,45 55,45 65,30 C75,5 85,15 100,30 L100,50 L0,50 Z" fill="url(#chartGradient)" />
+                                        <path d="M0,35 C15,10 25,18 30,25 C45,45 55,45 65,30 C75,5 85,15 100,30" fill="none" stroke="#A855F7" strokeWidth="2" strokeLinecap="round" />
+                                        <circle cx="21" cy="18" r="2.5" fill="#A855F7" />
+                                        <circle cx="75" cy="10" r="2.5" fill="#A855F7" />
+                                    </svg>
                                 </div>
-                                <div className="flex justify-between mt-4 text-xs text-slate-400 px-2 font-bold uppercase tracking-wider">
+                                <div className="flex justify-between mt-4 text-[16px] text-slate-400 font-bold px-2 p-[10px] tracking-wide">
                                     <span>오전</span><span>정오</span><span>오후</span>
                                 </div>
                             </div>
@@ -541,108 +583,125 @@ export default function HomePage() {
             </div>
 
             {isSettingsOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-md rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
-                        <div className="p-8 bg-brand-purple/5 flex justify-between items-center border-b border-brand-purple/10">
-                            <h2 className="text-2xl font-black text-brand-purple flex items-center gap-3">
-                                <Settings className="w-7 h-7 animate-spin-slow" />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F8F6FC] animate-in fade-in duration-300">
+                    <div className="bg-[#F8F6FC] w-full h-full max-w-md shadow-2xl overflow-hidden flex flex-col relative">
+                        {/* Header */}
+                        {/* Header */}
+                        <div className="p-4 sm:p-6 flex items-center justify-center relative shrink-0">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute left-4 w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors z-10"
+                                onClick={() => setIsSettingsOpen(false)}
+                            >
+                                <X className="w-5 h-5 text-slate-500" />
+                            </Button>
+                            <h2 className="text-xl font-bold text-brand-purple">
                                 반디 설정
                             </h2>
-                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-white transition-colors" onClick={() => setIsSettingsOpen(false)}>
-                                <X className="w-7 h-7 text-slate-400" />
-                            </Button>
                         </div>
 
-                        <div className="p-8 space-y-10 overflow-y-auto max-h-[60vh] hide-scrollbar">
-                            <section className="space-y-6">
-                                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                                    <Heart className="w-6 h-6 text-brand-purple" />
+                        <div className="p-5 sm:p-6 space-y-8 overflow-y-auto flex-1 hide-scrollbar bg-[#F8F6FC] pb-32">
+                            {/* 나의 호칭 설정 */}
+                            <section className="space-y-4">
+                                <h3 className="text-[15px] font-bold text-slate-400 px-1">
                                     나의 호칭 설정
                                 </h3>
-                                <div className="space-y-4">
-                                    <p className="text-sm font-bold text-slate-400 px-1">
-                                        반디가 저를 뭐라고 부르면 좋을까요?
+                                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-purple-100/50 flex flex-col items-center justify-center space-y-4">
+                                    <div className="text-5xl font-black text-brand-purple tracking-tight">
+                                        {userName || "대장"}
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-400">
+                                        반디가 당신을 부르는 호칭입니다
                                     </p>
-                                    <input
-                                        type="text"
-                                        className="w-full h-16 rounded-3xl bg-slate-50 px-6 text-xl font-black border-2 border-slate-100 focus:border-brand-purple/30 focus:bg-white outline-none transition-all"
-                                        placeholder="호칭을 입력하세요 (예: 대장, 할머니)"
-                                        value={userName}
-                                        onChange={(e) => {
-                                            const newName = e.target.value.slice(0, 10);
-                                            setUserName(newName);
-                                            localStorage.setItem("bandi-user-name", newName);
+                                    <Button
+                                        variant="outline"
+                                        className="mt-2 rounded-full px-6 h-10 border-brand-purple/20 text-brand-purple text-sm font-bold hover:bg-brand-purple/5 transition-colors"
+                                        onClick={() => {
+                                            const newName = prompt("새로운 호칭을 입력해주세요 (최대 10자)", userName);
+                                            if (newName !== null && newName.trim() !== "") {
+                                                const truncated = newName.trim().slice(0, 10);
+                                                setUserName(truncated);
+                                                localStorage.setItem("bandi-user-name", truncated);
+                                            }
                                         }}
-                                    />
+                                    >
+                                        변경하기
+                                    </Button>
                                 </div>
                             </section>
 
-                            <section className="space-y-6">
-                                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                                    <Volume2 className="w-6 h-6 text-brand-purple" />
+                            <section className="space-y-4">
+                                <h3 className="text-[15px] font-bold text-slate-400 px-1">
                                     반디 목소리
                                 </h3>
 
-                                <div className="space-y-8">
+                                <div className="space-y-6">
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-sm font-black text-pink-500 px-1">
-                                            <div className="w-2 h-2 rounded-full bg-pink-500" />
-                                            여성 목소리
+                                        <div className="flex items-center gap-2 text-[14px] font-bold text-slate-500 px-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-purple" />
+                                            여성
                                         </div>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {[0, 1, 2].map((idx) => (
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {(femaleVoices.length > 0 ? femaleVoices : [null, null, null]).slice(0, 3).map((v, idx) => (
                                                 <Button
-                                                    key={idx}
-                                                    variant={selectedVoice === idx ? "default" : "outline"}
+                                                    key={`female-${idx}`}
+                                                    variant={selectedVoiceType === "female" && voiceIndex === idx ? "default" : "outline"}
                                                     className={cn(
-                                                        "h-14 rounded-2xl font-black text-md transition-all border-2",
-                                                        selectedVoice === idx
-                                                            ? "bg-brand-purple border-brand-purple shadow-lg text-white scale-105"
-                                                            : "bg-white border-slate-100 text-slate-400 hover:border-brand-purple/30"
+                                                        "h-12 rounded-full font-bold text-[14px] transition-all border",
+                                                        selectedVoiceType === "female" && voiceIndex === idx
+                                                            ? "bg-white border-brand-purple text-brand-purple shadow-sm"
+                                                            : "bg-white border-white text-slate-600 hover:border-brand-purple/30 shadow-sm"
                                                     )}
                                                     onClick={() => {
-                                                        setSelectedVoice(idx);
-                                                        localStorage.setItem("bandi-voice", idx.toString());
+                                                        setSelectedVoiceType("female");
+                                                        setVoiceIndex(idx);
+                                                        localStorage.setItem("bandi-voice-config", JSON.stringify({ type: "female", index: idx }));
                                                         const testMsg = "반디 여성 목소리예요!";
                                                         const utterance = new SpeechSynthesisUtterance(testMsg);
-                                                        if (voices[idx]) utterance.voice = voices[idx];
+                                                        if (femaleVoices[idx]) utterance.voice = femaleVoices[idx];
                                                         window.speechSynthesis.cancel();
                                                         window.speechSynthesis.speak(utterance);
                                                     }}
                                                 >
-                                                    여성 {idx + 1}
+                                                    {`여성 ${idx + 1}`}
                                                 </Button>
                                             ))}
                                         </div>
                                     </div>
 
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-sm font-black text-blue-500 px-1">
-                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                            남성 목소리
+                                        <div className="flex items-center gap-2 text-[14px] font-bold text-slate-500 px-1 mt-6">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-purple" />
+                                            남성
                                         </div>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {[3, 4, 5].map((idx) => (
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {(maleVoices.length > 0 ? maleVoices : [null, null, null]).slice(0, 3).map((v, idx) => (
                                                 <Button
-                                                    key={idx}
-                                                    variant={selectedVoice === idx ? "default" : "outline"}
+                                                    key={`male-${idx}`}
+                                                    variant={selectedVoiceType === "male" && voiceIndex === idx ? "default" : "outline"}
                                                     className={cn(
-                                                        "h-14 rounded-2xl font-black text-md transition-all border-2",
-                                                        selectedVoice === idx
-                                                            ? "bg-brand-purple border-brand-purple shadow-lg text-white scale-105"
-                                                            : "bg-white border-slate-100 text-slate-400 hover:border-brand-purple/30"
+                                                        "h-12 rounded-full font-bold text-[14px] transition-all border",
+                                                        selectedVoiceType === "male" && voiceIndex === idx
+                                                            ? "bg-white border-brand-purple text-brand-purple shadow-sm"
+                                                            : "bg-white border-white text-slate-600 hover:border-brand-purple/30 shadow-sm"
                                                     )}
                                                     onClick={() => {
-                                                        setSelectedVoice(idx);
-                                                        localStorage.setItem("bandi-voice", idx.toString());
+                                                        if (maleVoices.length === 0) {
+                                                            alert("이 기기에서는 남성 목소리를 지원하지 않을 수 있습니다.");
+                                                            return;
+                                                        }
+                                                        setSelectedVoiceType("male");
+                                                        setVoiceIndex(idx);
+                                                        localStorage.setItem("bandi-voice-config", JSON.stringify({ type: "male", index: idx }));
                                                         const testMsg = "반디 남성 목소리예요!";
                                                         const utterance = new SpeechSynthesisUtterance(testMsg);
-                                                        if (voices[idx]) utterance.voice = voices[idx];
+                                                        if (maleVoices[idx]) utterance.voice = maleVoices[idx];
                                                         window.speechSynthesis.cancel();
                                                         window.speechSynthesis.speak(utterance);
                                                     }}
                                                 >
-                                                    남성 {idx - 2}
+                                                    {`남성 ${idx + 1}`}
                                                 </Button>
                                             ))}
                                         </div>
@@ -650,27 +709,25 @@ export default function HomePage() {
                                 </div>
                             </section>
 
-                            <section className="space-y-6">
-                                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                                    <Sparkles className="w-6 h-6 text-brand-purple" />
-                                    글씨 모양
+                            <section className="space-y-4">
+                                <h3 className="text-[15px] font-bold text-slate-400 px-1">
+                                    글꼴 선택
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {[
-                                        { id: "font-nanum-gothic", name: "표준 나눔고딕", class: "font-nanum-gothic" },
-                                        { id: "font-nanum-myeongjo", name: "인자한 명조체", class: "font-nanum-myeongjo" },
-                                        { id: "font-black-han-sans", name: "진한 블랙체", class: "font-black-han-sans" },
-                                        { id: "font-gowun-batang", name: "부드러운 고운바탕", class: "font-gowun-batang" }
+                                        { id: "font-nanum-gothic", name: "표준 정석체 (나눔고딕)", class: "font-nanum-gothic" },
+                                        { id: "font-nanum-myeongjo", name: "인자한 명조체 (나눔명조)", class: "font-nanum-myeongjo" },
+                                        { id: "font-black-han-sans", name: "진하고 굵은체 (블랙한산스)", class: "font-black-han-sans" }
                                     ].map((font) => (
                                         <Button
                                             key={font.id}
                                             variant={selectedFont === font.id ? "default" : "outline"}
                                             className={cn(
-                                                "w-full h-16 rounded-3xl text-xl font-black justify-start px-8 border-2 transition-all",
+                                                "w-full h-14 rounded-full text-[15px] font-bold justify-center border transition-all shadow-sm",
                                                 font.class,
                                                 selectedFont === font.id
-                                                    ? "bg-slate-800 border-slate-800 text-white shadow-xl"
-                                                    : "bg-white border-slate-100 hover:border-brand-purple/30 text-slate-600"
+                                                    ? "bg-white border-brand-purple text-brand-purple"
+                                                    : "bg-white border-white hover:border-brand-purple/30 text-slate-600"
                                             )}
                                             onClick={() => {
                                                 setSelectedFont(font.id);
@@ -682,12 +739,12 @@ export default function HomePage() {
                                     ))}
                                 </div>
                             </section>
-                        </div>
 
-                        <div className="p-8 bg-slate-50 border-t border-slate-100">
-                            <Button className="w-full h-18 rounded-3xl text-xl font-black bg-brand-purple hover:bg-brand-purple/90 shadow-xl shadow-brand-purple/20" onClick={() => setIsSettingsOpen(false)}>
-                                설정 완료
-                            </Button>
+                            {/* Footer area inside scroll for mobile feel */}
+                            <div className="pt-8 pb-4 flex flex-col items-center justify-center opacity-40">
+                                <p className="text-xl font-bold tracking-[0.2em] text-brand-purple mb-1">GYEOT</p>
+                                <p className="text-[10px] text-slate-400">© 2024 GYEOT. All rights reserved.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
