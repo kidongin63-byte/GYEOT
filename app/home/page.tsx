@@ -270,7 +270,7 @@ export default function HomePage() {
                         </div>
                     </button>
 
-                    <div className="pt-4">
+                    <div className="pt-2">
                         <Button
                             onClick={() => setActiveTab("emergency")}
                             className="w-full h-18 rounded-full bg-red-50 hover:bg-red-100 text-red-500 text-2xl font-black flex items-center justify-center gap-4 border-2 border-red-100/50 shadow-lg shadow-red-500/5 transition-all active:scale-95"
@@ -513,30 +513,73 @@ export default function HomePage() {
                                     <Volume2 className="w-6 h-6 text-brand-purple" />
                                     반디 목소리
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {voices.slice(0, 6).map((voice, idx) => (
-                                        <Button
-                                            key={idx}
-                                            variant={selectedVoice === idx ? "default" : "outline"}
-                                            className={cn(
-                                                "h-16 rounded-3xl font-black text-lg transition-all border-2",
-                                                selectedVoice === idx
-                                                    ? "bg-brand-purple border-brand-purple shadow-xl shadow-brand-purple/20 scale-105"
-                                                    : "bg-white border-slate-100 hover:border-brand-purple/30 text-slate-600"
-                                            )}
-                                            onClick={() => {
-                                                setSelectedVoice(idx);
-                                                localStorage.setItem("bandi-voice", idx.toString());
-                                                const testMsg = "반디 목소리예요!";
-                                                const utterance = new SpeechSynthesisUtterance(testMsg);
-                                                utterance.voice = voices[idx];
-                                                window.speechSynthesis.cancel();
-                                                window.speechSynthesis.speak(utterance);
-                                            }}
-                                        >
-                                            소리 {idx + 1}
-                                        </Button>
-                                    ))}
+
+                                <div className="space-y-8">
+                                    {/* Female Voices Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-sm font-black text-pink-500 px-1">
+                                            <div className="w-2 h-2 rounded-full bg-pink-500" />
+                                            여성 목소리
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[0, 1, 2].map((idx) => (
+                                                <Button
+                                                    key={idx}
+                                                    variant={selectedVoice === idx ? "default" : "outline"}
+                                                    className={cn(
+                                                        "h-14 rounded-2xl font-black text-md transition-all border-2",
+                                                        selectedVoice === idx
+                                                            ? "bg-brand-purple border-brand-purple shadow-lg text-white scale-105"
+                                                            : "bg-white border-slate-100 text-slate-400 hover:border-brand-purple/30"
+                                                    )}
+                                                    onClick={() => {
+                                                        setSelectedVoice(idx);
+                                                        localStorage.setItem("bandi-voice", idx.toString());
+                                                        const testMsg = "반디 여성 목소리예요!";
+                                                        const utterance = new SpeechSynthesisUtterance(testMsg);
+                                                        if (voices[idx]) utterance.voice = voices[idx];
+                                                        window.speechSynthesis.cancel();
+                                                        window.speechSynthesis.speak(utterance);
+                                                    }}
+                                                >
+                                                    여성 {idx + 1}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Male Voices Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-sm font-black text-blue-500 px-1">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                            남성 목소리
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[3, 4, 5].map((idx) => (
+                                                <Button
+                                                    key={idx}
+                                                    variant={selectedVoice === idx ? "default" : "outline"}
+                                                    className={cn(
+                                                        "h-14 rounded-2xl font-black text-md transition-all border-2",
+                                                        selectedVoice === idx
+                                                            ? "bg-brand-purple border-brand-purple shadow-lg text-white scale-105"
+                                                            : "bg-white border-slate-100 text-slate-400 hover:border-brand-purple/30"
+                                                    )}
+                                                    onClick={() => {
+                                                        setSelectedVoice(idx);
+                                                        localStorage.setItem("bandi-voice", idx.toString());
+                                                        const testMsg = "반디 남성 목소리예요!";
+                                                        const utterance = new SpeechSynthesisUtterance(testMsg);
+                                                        if (voices[idx]) utterance.voice = voices[idx];
+                                                        window.speechSynthesis.cancel();
+                                                        window.speechSynthesis.speak(utterance);
+                                                    }}
+                                                >
+                                                    남성 {idx - 2}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 
