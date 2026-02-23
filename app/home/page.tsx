@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import {
     Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, Pencil,
-    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -179,16 +179,9 @@ export default function HomePage() {
 
     const DashboardView = () => (
         <div className="flex flex-col h-full bg-[#FAFAFA] text-slate-800 animate-in fade-in duration-500">
-            {/* Dashboard Header */}
-            <header className="p-6 flex justify-between items-center bg-transparent shrink-0">
-                <Button variant="ghost" size="icon" className="rounded-full bg-white shadow-sm border border-slate-100">
-                    <X className="w-6 h-6 text-slate-400" />
-                </Button>
-                <div className="text-slate-500 font-bold text-lg">곁이 잠깐 확인해요</div>
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-white text-slate-600 rounded-full text-sm font-black shadow-sm border border-slate-100 transition-colors hover:bg-slate-50">
-                    안전
-                    <Settings className="w-4 h-4 text-slate-400" />
-                </div>
+            {/* Dashboard Header - Simplified */}
+            <header className="p-6 flex justify-center items-center bg-transparent shrink-0">
+                <div className="text-slate-400 font-bold text-lg">곁이 함께하고 있어요</div>
             </header>
 
             {/* Main Status Area */}
@@ -270,13 +263,20 @@ export default function HomePage() {
                         </div>
                     </button>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex items-center gap-3">
                         <Button
                             onClick={() => setActiveTab("emergency")}
-                            className="w-full h-18 rounded-full bg-red-50 hover:bg-red-100 text-red-500 text-2xl font-black flex items-center justify-center gap-4 border-2 border-red-100/50 shadow-lg shadow-red-500/5 transition-all active:scale-95"
+                            className="flex-1 h-18 rounded-full bg-[#FFF5F5] hover:bg-red-100/50 text-[#FF4D4D] text-2xl font-black flex items-center justify-center gap-4 border border-red-100/30 shadow-sm transition-all active:scale-95"
                         >
-                            <Sparkles className="w-7 h-7 fill-red-500/10" />
+                            <Sparkles className="w-7 h-7 fill-[#FF4D4D]/10" />
                             긴급호출
+                        </Button>
+                        <Button
+                            onClick={() => setIsSettingsOpen(true)}
+                            variant="secondary"
+                            className="w-18 h-18 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 border border-slate-100 flex items-center justify-center transition-all active:scale-95"
+                        >
+                            <Settings className="w-8 h-8" />
                         </Button>
                     </div>
                 </div>
@@ -373,7 +373,7 @@ export default function HomePage() {
                         <div className="max-w-md mx-auto space-y-8 pb-32">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-3xl font-black text-slate-800">오늘의 곁 리포트 📋</h2>
-                                <Button variant="ghost" size="icon" onClick={() => setActiveTab("home")} className="rounded-full">
+                                <Button variant="ghost" size="icon" onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }} className="rounded-full">
                                     <X className="w-6 h-6 text-slate-400" />
                                 </Button>
                             </div>
@@ -419,7 +419,7 @@ export default function HomePage() {
                 {activeTab === "emergency" && (
                     <div className="h-full px-6 py-12 flex flex-col items-center space-y-12 bg-white animate-in slide-in-from-bottom-20 duration-500">
                         <header className="w-full flex justify-between items-center bg-transparent mb-4">
-                            <Button variant="ghost" size="icon" onClick={() => setActiveTab("home")} className="rounded-full bg-slate-50 border border-slate-100">
+                            <Button variant="ghost" size="icon" onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }} className="rounded-full bg-slate-50 border border-slate-100">
                                 <X className="w-6 h-6 text-slate-400" />
                             </Button>
                             <div className="font-bold text-slate-700 text-lg">긴급 상황</div>
@@ -471,29 +471,6 @@ export default function HomePage() {
                 )}
             </div>
 
-            {/* Bottom Navigation */}
-            <nav className="flex justify-around items-center h-24 bg-white/80 backdrop-blur-2xl border-t border-slate-100 px-6 pb-6">
-                <button
-                    onClick={() => { setActiveTab("home"); setHomeView("dashboard"); }}
-                    className={cn("flex flex-col items-center gap-1 transition-all duration-300", activeTab === "home" ? "text-brand-purple scale-110" : "text-slate-300")}
-                >
-                    <div className={cn("p-2 rounded-2xl transition-all", activeTab === "home" ? "bg-brand-purple/10" : "")}>
-                        <MessageCircle className={cn("w-7 h-7", activeTab === "home" && "fill-brand-purple")} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">홈</span>
-                </button>
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="flex flex-col items-center gap-1 text-slate-300 hover:text-slate-400 transition-all font-black"
-                >
-                    <div className="p-2 rounded-2xl">
-                        <Settings className="w-7 h-7" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">설정</span>
-                </button>
-            </nav>
-
-            {/* 설정 모달 (기존 코드 유지 및 스타일 다듬기) */}
             {isSettingsOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-md rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
@@ -515,7 +492,6 @@ export default function HomePage() {
                                 </h3>
 
                                 <div className="space-y-8">
-                                    {/* Female Voices Section */}
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2 text-sm font-black text-pink-500 px-1">
                                             <div className="w-2 h-2 rounded-full bg-pink-500" />
@@ -548,7 +524,6 @@ export default function HomePage() {
                                         </div>
                                     </div>
 
-                                    {/* Male Voices Section */}
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2 text-sm font-black text-blue-500 px-1">
                                             <div className="w-2 h-2 rounded-full bg-blue-500" />
