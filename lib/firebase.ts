@@ -2,7 +2,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, updateDoc, doc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { getMessaging } from "firebase/messaging";
 
 // .env.local에 저장한 키값을 불러옵니다.
 const firebaseConfig = {
@@ -18,7 +17,6 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const messaging = typeof window !== "undefined" ? getMessaging(app) : null;
 
 // --- [ 1. 인증 로직 ] ---
 
