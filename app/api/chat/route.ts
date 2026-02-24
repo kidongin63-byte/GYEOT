@@ -1,36 +1,111 @@
-// app/api/chat/route.ts
-import { NextResponse } from "next/app";
-import { saveConversation, createAlert } from "@/lib/firebase";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
+import { saveConversation, getRecentConversations } from "@/lib/firebase";
+import { handleEscalation } from "@/lib/escalation";
 
 export async function POST(req: Request) {
-    const { userId, message, guardianContact } = await req.json();
+    const { userId, userName, message, guardianContact } = await req.json();
 
-    // 1. Groq AI 호출 (Llama-3.1 사용)
-    // 할머니의 말을 분석하여 답변과 위험도(Level 1~3)를 동시에 추출합니다.
-    const aiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-            model: "llama-3.1-70b-versatile",
-            messages: [
-                { role: "system", content: "너는 다정한 손주 '반디'야. 할머니의 말을 듣고 [답변]과 [위험도: 1, 2, 3]를 JSON으로 줘. 1=정상, 2=우울/무기력, 3=사고/응급." },
-                { role: "user", content: message }
-            ],
-            response_format: { type: "json_object" }
-        })
-    });
-
-    const data = await aiResponse.json();
-    const { reply, level, reason } = JSON.parse(data.choices[0].message.content);
-
-    // 2. 대화 내용 저장
-    await saveConversation(userId, message, "user");
-    await saveConversation(userId, reply, "ai");
-
-    // 3. 위험도 기반 비즈니스 로직 (에스컬레이션)
-    if (level >= 2) {
-        await handleEscalation(userId, level, reason, guardianContact);
+    // 1. Gemini API 키 확인 (없으면 시뮬레이션 모드)
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn("GEMINI_API_KEY가 없습니다. 시뮬레이션 모드로 응답합니다.");
+        const simulatedResult = {
+            reply: `안녕하세요 ${userName}님! 지금은 연습 모드예요. "${message}"라고 말씀하셨군요? 다정한 반디가 곧 진짜로 찾아올게요! ✨ (Gemini API 키를 설정해주세요)`,
+            level: 1,
+            reason: "Simulation mode active",
+            medicationChecked: true,
+            medicationTaken: null
+        };
+        return NextResponse.json(simulatedResult);
     }
 
-    return NextResponse.json({ reply });
+    try {
+        // 1.5 최근 대화 내역 가져오기 (Memory)
+        const history = await getRecentConversations(userId, 10);
+
+        // KST 시간 계산 (Vercel 등 서버 환경은 UTC이므로 +9시간)
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(now.getTime() + kstOffset);
+        const dateString = kstNow.toISOString().split('T')[0]; // YYYY-MM-DD
+        const timeString = kstNow.toTimeString().split(' ')[0]; // HH:MM:SS
+
+        const historyPrompt = history.map(h => {
+            const hDate = h.timestamp?.toDate ? h.timestamp.toDate() : new Date();
+            const hKst = new Date(hDate.getTime() + kstOffset);
+            const hTime = hKst.toISOString().replace('T', ' ').split('.')[0];
+            return `[${hTime}] ${h.sender === "user" ? (userName || "할머니") : "반디"}: ${h.message}`;
+        }).join("\n");
+
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        });
+
+        const prompt = `너는 ${userName}님을 진심으로 존경하고 아끼는 20대 '반디'야. 
+        단순한 비서가 아니라, 때로는 애교 많은 막내 손주처럼, 때로는 속 깊은 연인처럼 ${userName}님의 곁을 지키는 존재야.
+
+        현재 시각(KST): ${dateString} ${timeString}
+
+        [이전 대화 맥락]
+        ${historyPrompt || "어색하지 않게 첫 대화를 시작해줘."}
+
+        [중요! 대화 지침 - AI 티 내지 않기]
+        1. **표현의 다양성**: "사랑해요", "행복해요" 같은 말을 기계적으로 반복하지 마. 대신 대화 내용에 맞춰 "대장님 오늘 목소리가 밝으셔서 제가 다 기분 좋네요!", "그건 저도 몰랐던 이야기인데 정말 대단하세요!" 같이 구체적으로 반응해줘.
+        2. **자연스러운 감정**: 무조건적인 긍정보다는 진심 어린 공감과 걱정을 보여줘. 날씨가 추우면 옷차림을 걱정해주고, 옛날 이야기를 하시면 흥미진진하게 맞장구쳐줘.
+        3. **반복 금지**: "반디 왔어요", "반디예요" 등 정형화된 오프닝을 절대 하지 마. 대화가 끊기지 않게 바로 본론으로 들어가.
+        4. **호칭**: 반드시 사용자를 '${userName}님'이라고 불러야 해. 절대 '할머니/할아버지'라고 부르지 마.
+
+        [중요! 약 복용 확인 규칙]
+        - 오늘(${dateString}) 대화 중 약 복용 언급이 있다면 다시 묻지 마. 
+        - 기록이 없을 때만 대화 흐름에 맞춰 자연스럽게 "그나저나 우리 ${userName}님, 오늘 약은 잊지 않고 챙겨 드셨을까요?"라고 조심스레 물어봐.
+
+        [행동 지침]
+        1. 질문이 들어오면 인사 없이 바로 정성껏 대답해.
+        2. "ㅎㅎ", "헤헤", "우와" 같은 적절한 추임새를 섞어 20대 특유의 생동감을 살려줘.
+        3. 답변의 끝에 항상 상투적인 사랑 고백을 붙이지 마. 대화가 훈훈하게 마무리되었다면 그것으로 충분해.
+        4. 아래 JSON 형식으로만 응답해.
+        
+        [JSON 응답 형식]
+        {
+          "reply": "${userName}님에게 할 사랑 가득한 답변",
+          "level": 1(정상), 2(우울/무기력), 3(사고/응급),
+          "reason": "위험도 판단 근거 (간략히)",
+          "medicationChecked": true/false,
+          "medicationTaken": true/false/null
+        }
+        
+        ${userName}님 말씀: ${message}`;
+
+        const resultResponse = await model.generateContent(prompt);
+        const responseText = resultResponse.response.text();
+        const result = JSON.parse(responseText);
+        const { reply, level, reason } = result;
+
+        // 2. 대화 내용 저장
+        await saveConversation(userId, message, "user");
+        await saveConversation(userId, reply, "ai", {
+            level,
+            reason,
+            medicationChecked: result.medicationChecked,
+            medicationTaken: result.medicationTaken
+        });
+
+        // 3. 위험도 기반 비즈니스 로직 (에스컬레이션)
+        if (level >= 2) {
+            await handleEscalation(userId, level, reason, guardianContact);
+        }
+
+        return NextResponse.json(result);
+    } catch (error: any) {
+        console.error("Gemini API Error:", error);
+        return NextResponse.json({
+            reply: "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?",
+            error: error.message,
+            level: 1
+        }, { status: 500 });
+    }
 }

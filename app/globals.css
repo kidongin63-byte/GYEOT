@@ -1,3 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Batang:wght@400;700&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&display=swap');
+
+/* Font Utility Classes */
+.font-nanum-gothic {
+  font-family: 'Nanum Gothic', sans-serif;
+}
+
+.font-nanum-myeongjo {
+  font-family: 'Nanum Myeongjo', serif;
+}
+
+.font-black-han-sans {
+  font-family: 'Black Han Sans', sans-serif;
+}
+
+.font-gowun-batang {
+  font-family: 'Gowun Batang', serif;
+}
+
+.font-nanum-pen {
+  font-family: 'Nanum Pen Script', cursive;
+}
 
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -11,34 +33,92 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    /* 부드러운 크림색 */
+    --background: 280 40% 99%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
-    --primary: 199 89% 48%;
-    /* 연한 하늘색 (김할머니 페르소나) */
-    --primary-foreground: 210 40% 98%;
+    --primary: 260 80% 65%;
+    --primary-foreground: 0 0% 100%;
 
-    /* 위험도 표시용 (이주무관 페르소나) */
-    --safe: 142 71% 45%;
-    /* 초록 */
-    --warning: 48 96% 53%;
-    /* 노랑 */
-    --danger: 0 84% 60%;
-    /* 빨강 */
+    --brand-purple: 262 70% 60%;
+    --brand-orange: 10 60% 50%;
 
-    --radius: 1.5rem;
-    /* 더 둥글게 (부드러운 느낌) */
+    --radius: 2rem;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(180deg, #F9F5FF 0%, #FFFFFF 100%);
+    min-height: 100vh;
   }
+}
+
+.landing-gradient {
+  background: linear-gradient(180deg, #F3E8FF 0%, #FFFFFF 100%);
+}
+
+.text-brand-purple {
+  color: #7C3AED;
+}
+
+
+/* Custom Mobile Utilities */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 3s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+.dashboard-card {
+  border-radius: 40px 40px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.05);
 }
 
 body {
@@ -168,6 +248,7 @@ button {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
