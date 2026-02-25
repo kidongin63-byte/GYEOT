@@ -12,7 +12,7 @@ export async function generateDailyReport(userId: string) {
 
     const q = query(
         collection(db, "conversations"),
-        where("userId", "userId"),
+        where("userId", "==", userId),
         where("timestamp", ">=", today),
         orderBy("timestamp", "asc")
     );

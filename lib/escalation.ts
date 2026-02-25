@@ -3,7 +3,7 @@ import { createAlert, sendPushNotification } from "@/lib/firebase";
 
 export async function handleEscalation(userId: string, level: number, reason: string, contact: string) {
     // 1. Firestore에 즉시 경고 로그 생성
-    await createAlert(userId, level, reason);
+    await createAlert(userId, level as 1 | 2 | 3, reason);
 
     // 2. Level 2 (박아들 알림)
     if (level === 2) {
