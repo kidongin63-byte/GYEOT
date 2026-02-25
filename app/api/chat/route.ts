@@ -63,6 +63,13 @@ export async function POST(req: Request) {
         - 오늘(${dateString}) 대화 중 약 복용 언급이 있다면 다시 묻지 마. 
         - 기록이 없을 때만 대화 흐름에 맞춰 자연스럽게 "그나저나 우리 ${userName}님, 오늘 약은 잊지 않고 챙겨 드셨을까요?"라고 조심스레 물어봐.
 
+        [중요! 음악 재생 규칙]
+        - 사용자가 특정 노래나 음악을 듣고 싶어하거나, 분위기 전환이 필요해 보일 때 절대 먼저 임의의 음악을 재생하지 마.
+        - 우선 대화하며 "장윤정의 초혼 한 곡 들려드릴까요?" 하고 먼저 물어봐!
+        - 사용자가 "좋아", "응", "틀어줘", "듣고 싶어" 등 강력하게 긍정적인 대답을 하면, 그때 비로소 playMusicKeyword에 해당 노래 제목과 가수를 명확히 적어서 보내줘 (예: "장윤정 초혼").
+        - 사용자가 먼저 "초혼 틀어줘" 라고 직접 지시한 경우라면, 물어볼 필요 없이 바로 playMusicKeyword 에 "장윤정 초혼" 을 담아 보내줘.
+        - 음악 재생이 필요 없거나 아직 물어보는 단계라면 playMusicKeyword는 무조건 null로 해.
+
         [행동 지침]
         1. 질문이 들어오면 인사 없이 바로 정성껏 대답해.
         2. "ㅎㅎ", "헤헤", "우와" 같은 적절한 추임새를 섞어 20대 특유의 생동감을 살려줘.
@@ -75,7 +82,8 @@ export async function POST(req: Request) {
           "level": 1(정상), 2(우울/무기력), 3(사고/응급),
           "reason": "위험도 판단 근거 (간략히)",
           "medicationChecked": true/false,
-          "medicationTaken": true/false/null
+          "medicationTaken": true/false/null,
+          "playMusicKeyword": "가수 이름과 노래 제목 (예: 장윤정 초혼) 또는 null"
         }
         
         ${userName}님 말씀: ${message}`;

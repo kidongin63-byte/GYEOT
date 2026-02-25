@@ -11,6 +11,7 @@ import {
     BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import YouTube from "react-youtube";
 
 interface Message {
     role: "user" | "ai";
@@ -298,6 +299,7 @@ export default function HomePage() {
     const [selectedFont, setSelectedFont] = useState("font-nanum-gothic");
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [currentPlayingVideoId, setCurrentPlayingVideoId] = useState<string | null>(null);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -391,6 +393,20 @@ export default function HomePage() {
             const data = await response.json();
             setMessages(prev => [...prev, { role: "ai", content: data.reply }]);
             speak(data.reply);
+
+            // 음악 재생 신호가 있으면 유튜브 검색 및 재생
+            if (data.playMusicKeyword) {
+                try {
+                    const ytResponse = await fetch(`/api/youtube?q=${encodeURIComponent(data.playMusicKeyword)}`);
+                    const ytData = await ytResponse.json();
+                    if (ytData.videoId) {
+                        setCurrentPlayingVideoId(null); // 잠시 초기화 후 다시 세팅하여 리렌더링 유도
+                        setTimeout(() => setCurrentPlayingVideoId(ytData.videoId), 100);
+                    }
+                } catch (ytError) {
+                    console.error("YouTube Search Error:", ytError);
+                }
+            }
         } catch (error) {
             const errorMsg = "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?";
             setMessages(prev => [...prev, { role: "ai", content: errorMsg }]);
@@ -747,6 +763,28 @@ export default function HomePage() {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* 숨겨진 유튜브 오디오 플레이어 */}
+            {currentPlayingVideoId && (
+                <div style={{ display: "none" }}>
+                    <YouTube
+                        videoId={currentPlayingVideoId}
+                        opts={{
+                            width: "0",
+                            height: "0",
+                            playerVars: {
+                                autoplay: 1,
+                                controls: 0,
+                                disablekb: 1,
+                                fs: 0,
+                            },
+                        }}
+                        onReady={(event) => {
+                            event.target.playVideo();
+                        }}
+                    />
                 </div>
             )}
         </div>
