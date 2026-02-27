@@ -34,7 +34,7 @@ export async function POST(req: Request) {
             const hDate = h.timestamp?.toDate ? h.timestamp.toDate() : new Date();
             const hKst = new Date(hDate.getTime() + kstOffset);
             const hTime = hKst.toISOString().replace('T', ' ').split('.')[0];
-            return `[${hTime}] ${h.sender === "user" ? (userName || "할머니") : "반디"}: ${h.message}`;
+            return `[${hTime}] ${h.sender === "user" ? (userName || "바다") : "반디"}: ${h.message}`;
         }).join("\n");
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Gemini API Error:", error);
         return NextResponse.json({
-            reply: "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?",
+            reply: `아이구 ${userName || '바다'}님, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?`,
             error: error.message,
             level: 1
         }, { status: 500 });

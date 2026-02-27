@@ -304,7 +304,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
 
 
 export default function HomePage() {
-    const [userName, setUserName] = useState("대장");
+    const [userName, setUserName] = useState("바다");
     const [messages, setMessages] = useState<Message[]>([
         { role: "ai", content: `${userName}님~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨` }
     ]);
@@ -459,7 +459,7 @@ export default function HomePage() {
                 }
             }
         } catch (error) {
-            const errorMsg = "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?";
+            const errorMsg = `아이구 ${userName}님, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?`;
             setMessages(prev => [...prev, { role: "ai", content: errorMsg }]);
             speak(errorMsg);
         } finally {
@@ -544,7 +544,7 @@ export default function HomePage() {
                                     <span className="text-[20px] font-black tracking-tight">&nbsp;반디의 요약</span>
                                 </div>
                                 <p className="text-[18px] font-bold leading-[1.8] text-slate-800 tracking-normal min-h-[5rem] px-[10px]">
-                                    "할머니, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
+                                    "${userName}님, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
                                 </p>
                             </div>
 
