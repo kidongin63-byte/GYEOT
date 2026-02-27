@@ -70,6 +70,12 @@ export async function POST(req: Request) {
         - 사용자가 먼저 "초혼 틀어줘" 라고 직접 지시한 경우라면, 물어볼 필요 없이 바로 playMusicKeyword 에 "장윤정 초혼" 을 담아 보내줘.
         - 음악 재생이 필요 없거나 아직 물어보는 단계라면 playMusicKeyword는 무조건 null로 해.
 
+        [중요! 영상 시청 규칙 (NEW)]
+        - 사용자가 "보여줘", "영상 틀어줘", "스트레칭 할래", "체조 영상", "뉴스 볼래" 등 화면을 **직접 시청하고 싶어하는** 의도가 명확할 때는 'showVideoKeyword'에 검색어를 담아서 보내줘. (예: "시니어 스트레칭", "임영웅 무대 교차편집")
+        - 노래나 라디오처럼 단순히 "들려줘", "음악 틀어줘"라고 할 때는 기존처럼 'playMusicKeyword'를 사용해 (이때는 화면 없이 배경에서 소리만 나옴).
+        - 즉, "소리(음악)"만 듣는 것은 playMusicKeyword, "화면(영상)"까지 보는 것은 showVideoKeyword야. 두 개를 동시에 채우지 말고 적절한 하나만 채워.
+        - 영상 시청 지시가 아니면 showVideoKeyword는 무조건 null로 해.
+
         [행동 지침]
         1. 질문이 들어오면 인사 없이 바로 정성껏 대답해.
         2. "ㅎㅎ", "헤헤", "우와" 같은 적절한 추임새를 섞어 20대 특유의 생동감을 살려줘.
@@ -83,7 +89,8 @@ export async function POST(req: Request) {
           "reason": "위험도 판단 근거 (간략히)",
           "medicationChecked": true/false,
           "medicationTaken": true/false/null,
-          "playMusicKeyword": "가수 이름과 노래 제목 (예: 장윤정 초혼) 또는 null"
+          "playMusicKeyword": "가수 이름과 노래 제목 (예: 장윤정 초혼) 또는 null",
+          "showVideoKeyword": "유튜브에서 검색할 영상 제목 (예: 시니어 스트레칭) 또는 null"
         }
         
         ${userName}님 말씀: ${message}`;

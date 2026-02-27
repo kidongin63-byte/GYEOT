@@ -16,6 +16,7 @@ import YouTube from "react-youtube";
 interface Message {
     role: "user" | "ai";
     content: string;
+    videoId?: string;
 }
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setInput: (val: string) => void, input: string }) => (
@@ -223,6 +224,20 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                     : "bg-white text-slate-800 rounded-tl-none border border-slate-50 text-[18px] max-w-[100%] p-[7px]"
                             )}>
                                 {msg.content}
+                                {msg.videoId && (
+                                    <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
+                                        <YouTube
+                                            videoId={msg.videoId}
+                                            opts={{
+                                                width: "100%",
+                                                height: "180",
+                                                playerVars: {
+                                                    autoplay: 1,
+                                                },
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -350,7 +365,10 @@ export default function HomePage() {
     const speak = (text: string) => {
         if (typeof window === "undefined" || !window.speechSynthesis) return;
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
+
+        // 미모티콘 및 이모지 읽기 방지를 위해 텍스트에서 이모지 제거
+        const cleanText = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
+        const utterance = new SpeechSynthesisUtterance(cleanText);
 
         const targetVoices = selectedVoiceType === "female" ? femaleVoices : maleVoices;
         if (targetVoices[voiceIndex]) {
@@ -394,7 +412,7 @@ export default function HomePage() {
             setMessages(prev => [...prev, { role: "ai", content: data.reply }]);
             speak(data.reply);
 
-            // 음악 재생 신호가 있으면 유튜브 검색 및 재생
+            // 음악 재생 신호가 있으면 유튜브 검색 및 재생 (오디오 전용: 숨김 플레이어)
             if (data.playMusicKeyword) {
                 try {
                     const ytResponse = await fetch(`/api/youtube?q=${encodeURIComponent(data.playMusicKeyword)}`);
@@ -402,6 +420,27 @@ export default function HomePage() {
                     if (ytData.videoId) {
                         setCurrentPlayingVideoId(null); // 잠시 초기화 후 다시 세팅하여 리렌더링 유도
                         setTimeout(() => setCurrentPlayingVideoId(ytData.videoId), 100);
+                    }
+                } catch (ytError) {
+                    console.error("YouTube Search Error:", ytError);
+                }
+            }
+
+            // 영상 시청 신호가 있으면 유튜브 검색 후 말풍선에 비디오 ID 추가 (비디오: 화면 표시)
+            if (data.showVideoKeyword) {
+                try {
+                    const ytResponse = await fetch(`/api/youtube?q=${encodeURIComponent(data.showVideoKeyword)}`);
+                    const ytData = await ytResponse.json();
+                    if (ytData.videoId) {
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            // 방금 추가된 AI의 답변 객체에 videoId를 추가
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                videoId: ytData.videoId
+                            };
+                            return newMessages;
+                        });
                     }
                 } catch (ytError) {
                     console.error("YouTube Search Error:", ytError);
