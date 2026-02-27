@@ -397,7 +397,7 @@ export default function HomePage() {
         setShowKeyboard(false);
         setIsListening(false);
 
-        // 새로운 대화 시작 시 기존 재생 중이던 음악/영상 초기화
+        // 새로운 대화 시작 시 기존 재생 중이던 음악/영상 종료 (사용자 요청 사항)
         setCurrentPlayingVideoId(null);
         setMessages(prev => prev.map(msg => ({ ...msg, videoId: undefined })));
 
@@ -813,19 +813,20 @@ export default function HomePage() {
                 </div>
             )}
 
-            {/* 숨겨진 유튜브 오디오 플레이어 */}
+            {/* 숨겨진 유튜브 오디오 플레이어 (브라우저 자동재생 정책 대응을 위해 display:none 대신 화면 밖 배치) */}
             {currentPlayingVideoId && (
-                <div style={{ display: "none" }}>
+                <div className="fixed -top-full -left-full w-1 h-1 opacity-0 pointer-events-none overflow-hidden">
                     <YouTube
                         videoId={currentPlayingVideoId}
                         opts={{
-                            width: "0",
-                            height: "0",
+                            width: "64",
+                            height: "64",
                             playerVars: {
                                 autoplay: 1,
                                 controls: 0,
                                 disablekb: 1,
                                 fs: 0,
+                                origin: typeof window !== "undefined" ? window.location.origin : "",
                             },
                         }}
                         onReady={(event) => {
