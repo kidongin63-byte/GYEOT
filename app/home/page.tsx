@@ -393,6 +393,11 @@ export default function HomePage() {
         setInput("");
         setShowKeyboard(false);
         setIsListening(false);
+
+        // 새로운 대화 시작 시 기존 재생 중이던 음악/영상 초기화
+        setCurrentPlayingVideoId(null);
+        setMessages(prev => prev.map(msg => ({ ...msg, videoId: undefined })));
+
         setMessages(prev => [...prev, { role: "user", content: messageToSend }]);
         setIsLoading(true);
 
