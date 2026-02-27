@@ -10,11 +10,16 @@ export async function GET(req: Request) {
     }
 
     try {
-        const result = await youtubeSearchApi.GetListByKeyword(query, false, 5, [{ type: "video" }]);
+        // 옵션 없이 검색하여 더 넓은 결과를 가져옴 (필터가 가끔 오류를 유발)
+        const result = await youtubeSearchApi.GetListByKeyword(query, false, 5);
 
-        // 검색 결과 중 type이 'video'인 첫 번째 항목만 추출
-        const videoItem = result.items.find((item: any) => item.type === "video");
-        const videoId = videoItem?.id;
+        if (!result || !result.items || result.items.length === 0) {
+            return NextResponse.json({ error: "검색된 결과가 없습니다." }, { status: 404 });
+        }
+
+        // 'video' 타입인 첫 번째 항목을 찾거나, 타입이 없더라도 첫 번째 항목 사용
+        const videoItem = result.items.find((item: any) => item.type === "video") || result.items[0];
+        const videoId = typeof videoItem === 'string' ? videoItem : videoItem?.id;
 
         if (videoId) {
             return NextResponse.json({ videoId });

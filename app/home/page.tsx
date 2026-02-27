@@ -233,7 +233,11 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                 height: "180",
                                                 playerVars: {
                                                     autoplay: 1,
+                                                    origin: typeof window !== "undefined" ? window.location.origin : "",
                                                 },
+                                            }}
+                                            onReady={(event) => {
+                                                event.target.playVideo();
                                             }}
                                         />
                                     </div>
