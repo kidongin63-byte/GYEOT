@@ -262,8 +262,11 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                         {msg.placeData.category || "장소"}
                                                     </div>
                                                 </div>
-                                                <p className="font-black text-slate-800 text-lg leading-tight">{msg.placeData.name}</p>
-                                                <p className="text-[13px] text-slate-400 font-bold mt-1">{msg.placeData.address}</p>
+                                                <p className="font-black text-slate-800 text-xl leading-tight mb-2">{msg.placeData.name}</p>
+                                                <div className="flex items-start gap-2 bg-slate-100/50 p-3 rounded-xl border border-slate-100">
+                                                    <MapPin className="w-5 h-5 text-brand-purple shrink-0 mt-0.5" />
+                                                    <p className="text-[16px] text-slate-700 font-black leading-tight">{msg.placeData.address}</p>
+                                                </div>
                                             </div>
                                             <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-brand-purple shrink-0">
                                                 <MapPin className="w-6 h-6" />

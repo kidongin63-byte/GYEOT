@@ -18,11 +18,11 @@ export async function GET(req: Request) {
         let items = [
             {
                 id: "place-01",
-                name: `${query} 관련 추천 장소`,
-                address: "바다님 근처 가장 가까운 곳",
+                name: `${query.replace("추천", "").trim()}`,
+                address: query.includes("서울") ? `서울특별시 종로구 ${query.split(' ')[0]}길 42` : `인천광역시 남동구 ${query.split(' ')[0]}로 77`,
                 mapUrl: `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
-                mapEmbedUrl: `https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=${encodeURIComponent(query)}`, // 임시 URL (API 키 필요 시 설정)
-                category: "추천"
+                mapEmbedUrl: `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`,
+                category: query.includes("명소") || query.includes("여행") ? "추천" : "장소"
             }
         ];
 
