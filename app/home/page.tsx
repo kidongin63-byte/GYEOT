@@ -17,6 +17,12 @@ interface Message {
     role: "user" | "ai";
     content: string;
     videoId?: string;
+    placeData?: {
+        name: string;
+        address: string;
+        mapUrl: string;
+        category?: string;
+    };
 }
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setInput: (val: string) => void, input: string }) => (
@@ -242,6 +248,35 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                         />
                                     </div>
                                 )}
+                                {msg.placeData && (
+                                    <div className="mt-3 p-5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className={cn(
+                                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
+                                                        msg.placeData.category === "의료" ? "bg-red-50 text-red-600" :
+                                                            msg.placeData.category === "음식" ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"
+                                                    )}>
+                                                        {msg.placeData.category || "장소"}
+                                                    </div>
+                                                </div>
+                                                <p className="font-black text-slate-800 text-lg leading-tight">{msg.placeData.name}</p>
+                                                <p className="text-[13px] text-slate-400 font-bold mt-1">{msg.placeData.address}</p>
+                                            </div>
+                                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-brand-purple shrink-0">
+                                                <MapPin className="w-6 h-6" />
+                                            </div>
+                                        </div>
+                                        <Button
+                                            className="w-full h-11 rounded-xl bg-brand-purple hover:bg-brand-purple/90 text-white font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+                                            onClick={() => window.open(msg.placeData?.mapUrl, "_blank")}
+                                        >
+                                            <MapPin className="w-4 h-4" />
+                                            지도로 위치 확인하기
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -456,6 +491,26 @@ export default function HomePage() {
                     }
                 } catch (ytError) {
                     console.error("YouTube Search Error:", ytError);
+                }
+            }
+
+            // 장소 검색 신호가 있으면 장소 검색 후 말풍선에 데이터 추가
+            if (data.searchPlaceKeyword) {
+                try {
+                    const placeRes = await fetch(`/api/places?q=${encodeURIComponent(data.searchPlaceKeyword)}`);
+                    const placeData = await placeRes.json();
+                    if (placeData.items && placeData.items.length > 0) {
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                placeData: placeData.items[0]
+                            };
+                            return newMessages;
+                        });
+                    }
+                } catch (placeError) {
+                    console.error("Place Search Error:", placeError);
                 }
             }
         } catch (error) {

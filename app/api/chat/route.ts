@@ -55,8 +55,9 @@ export async function POST(req: Request) {
         [기능 제어 규칙 (절대 준수)]
         1. **영상/영화/보여줘**: 메시지에 "영상", "영화", "보여줘", "보여주렴" 등 시청 관련 단어가 있으면 **반드시 'showVideoKeyword'**에만 검색어를 넣으세요.
         2. **음악/노래/틀어줘**: 메시지에 "노래", "음악", "틀어줘", "들려줘" 등 청취 관련 단어가 있으면 **반드시 'playMusicKeyword'**에만 검색어를 넣으세요.
-        3. **내용**: 키워드에는 "장윤정 초혼", "시니어 스트레칭" 같이 검색에 필요한 명사만 정확히 입력하세요.
-        4. **즉시 실행**: 대화로 제안만 하지 말고 즉시 키워드를 생성해야 재생이 시작됩니다.
+        3. **장소/맛집/병원/여행**: 맛집, 병원, 약국, 여행지 등 특정 장소를 찾는 요청이 있으면 **반드시 'searchPlaceKeyword'**에 검색어를 넣으세요. (예: "종로구 정형외과", "강남역 맛집")
+        4. **내용**: 키워드에는 "장윤정 초혼", "시니어 스트레칭" 같이 검색에 필요한 명사만 정확히 입력하세요.
+        5. **즉시 실행**: 대화로 제안만 하지 말고 즉시 키워드를 생성해야 재생/검색이 시작됩니다.
 
         [응답 JSON 구조]
         {
@@ -65,9 +66,10 @@ export async function POST(req: Request) {
           "reason": "판단 근거",
           "medicationChecked": true/false,
           "medicationTaken": true/false/null,
-          "requestDetected": true(음악/영상요청있음)/false(없음),
+          "requestDetected": true(음약/영상/장소요청있음)/false(없음),
           "playMusicKeyword": "노래제목 또는 null",
-          "showVideoKeyword": "영상제목 또는 null"
+          "showVideoKeyword": "영상제목 또는 null",
+          "searchPlaceKeyword": "장소명 또는 null"
         }`;
 
         const model = genAI.getGenerativeModel({
