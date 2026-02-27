@@ -190,7 +190,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
             <div className="w-16" />
         </header>
 
-        <ScrollArea className="flex-1 px-3 py-3 hide-scrollbar">
+        <div className="flex-1 overflow-y-auto px-3 py-3 hide-scrollbar min-h-0">
             <div className="space-y-20 max-w-[380px] mx-auto pb-16 px-1">
                 {messages.map((msg, i) => (
                     <div key={i} className={`flex flex-col mb-[20px] ${msg.role === "user" ? "items-end" : "items-start"}`}>
@@ -254,7 +254,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                 )}
                 <div ref={scrollRef} />
             </div>
-        </ScrollArea>
+        </div>
 
         <div className="p-3 pb-8 bg-white border-t border-slate-100">
             <div className="flex gap-2 items-center bg-slate-100/50 p-1 rounded-full border border-slate-200 focus-within:bg-white focus-within:border-brand-purple/30 transition-all z-20">
@@ -382,7 +382,10 @@ export default function HomePage() {
 
     useEffect(() => {
         if (scrollRef.current && activeTab === "home" && homeView === "chat") {
-            scrollRef.current.scrollIntoView({ behavior: "smooth" });
+            // UI가 렌더링되고 비디오 플레이어가 자리 잡을 시간을 약간 준 뒤 스크롤 실행
+            setTimeout(() => {
+                scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 150);
         }
     }, [messages, activeTab, homeView]);
 
