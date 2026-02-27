@@ -21,6 +21,7 @@ interface Message {
         name: string;
         address: string;
         mapUrl: string;
+        mapEmbedUrl?: string;
         category?: string;
     };
 }
@@ -268,12 +269,25 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                 <MapPin className="w-6 h-6" />
                                             </div>
                                         </div>
+
+                                        {/* 지도 미리보기 (창 방식) */}
+                                        <div className="rounded-xl overflow-hidden border border-slate-100 bg-white h-[180px] relative">
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                loading="lazy"
+                                                allowFullScreen
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(msg.placeData.name + " " + msg.placeData.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                            />
+                                        </div>
+
                                         <Button
                                             className="w-full h-11 rounded-xl bg-brand-purple hover:bg-brand-purple/90 text-white font-black text-sm flex items-center justify-center gap-2 shadow-sm"
                                             onClick={() => window.open(msg.placeData?.mapUrl, "_blank")}
                                         >
                                             <MapPin className="w-4 h-4" />
-                                            지도로 위치 확인하기
+                                            내비게이션으로 길 찾기 (앱 연동)
                                         </Button>
                                     </div>
                                 )}

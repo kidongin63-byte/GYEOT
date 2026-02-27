@@ -21,6 +21,7 @@ export async function GET(req: Request) {
                 name: `${query} 관련 추천 장소`,
                 address: "바다님 근처 가장 가까운 곳",
                 mapUrl: `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
+                mapEmbedUrl: `https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=${encodeURIComponent(query)}`, // 임시 URL (API 키 필요 시 설정)
                 category: "추천"
             }
         ];
