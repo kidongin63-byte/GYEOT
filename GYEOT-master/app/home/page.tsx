@@ -17,6 +17,13 @@ interface Message {
     role: "user" | "ai";
     content: string;
     videoId?: string;
+    placeData?: {
+        name: string;
+        address: string;
+        mapUrl: string;
+        mapEmbedUrl?: string;
+        category?: string;
+    };
 }
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setInput: (val: string) => void, input: string }) => (
@@ -233,9 +240,58 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                 height: "180",
                                                 playerVars: {
                                                     autoplay: 1,
+                                                    origin: typeof window !== "undefined" ? window.location.origin : "",
                                                 },
                                             }}
+                                            onReady={(event) => {
+                                                event.target.playVideo();
+                                            }}
                                         />
+                                    </div>
+                                )}
+                                {msg.placeData && (
+                                    <div className="mt-3 p-5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className={cn(
+                                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
+                                                        msg.placeData.category === "의료" ? "bg-red-50 text-red-600" :
+                                                            msg.placeData.category === "음식" ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"
+                                                    )}>
+                                                        {msg.placeData.category || "장소"}
+                                                    </div>
+                                                </div>
+                                                <p className="font-black text-slate-800 text-xl leading-tight mb-2">{msg.placeData.name}</p>
+                                                <div className="flex items-start gap-2 bg-slate-100/50 p-3 rounded-xl border border-slate-100">
+                                                    <MapPin className="w-5 h-5 text-brand-purple shrink-0 mt-0.5" />
+                                                    <p className="text-[16px] text-slate-700 font-black leading-tight">{msg.placeData.address}</p>
+                                                </div>
+                                            </div>
+                                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-brand-purple shrink-0">
+                                                <MapPin className="w-6 h-6" />
+                                            </div>
+                                        </div>
+
+                                        {/* 지도 미리보기 (창 방식) */}
+                                        <div className="rounded-xl overflow-hidden border border-slate-100 bg-white h-[180px] relative">
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                loading="lazy"
+                                                allowFullScreen
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(msg.placeData.name + " " + msg.placeData.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                            />
+                                        </div>
+
+                                        <Button
+                                            className="w-full h-11 rounded-xl bg-brand-purple hover:bg-brand-purple/90 text-white font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+                                            onClick={() => window.open(msg.placeData?.mapUrl, "_blank")}
+                                        >
+                                            <MapPin className="w-4 h-4" />
+                                            내비게이션으로 길 찾기 (앱 연동)
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -300,7 +356,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
 
 
 export default function HomePage() {
-    const [userName, setUserName] = useState("대장");
+    const [userName, setUserName] = useState("바다");
     const [messages, setMessages] = useState<Message[]>([
         { role: "ai", content: `${userName}님~ 저 반디예요! 오늘 기분은 좀 어떠세요? ✨` }
     ]);
@@ -397,7 +453,7 @@ export default function HomePage() {
         setShowKeyboard(false);
         setIsListening(false);
 
-        // 새로운 대화 시작 시 기존 재생 중이던 음악/영상 초기화
+        // 새로운 대화 시작 시 기존 재생 중이던 음악/영상 종료 (사용자 요청 사항)
         setCurrentPlayingVideoId(null);
         setMessages(prev => prev.map(msg => ({ ...msg, videoId: undefined })));
 
@@ -452,6 +508,26 @@ export default function HomePage() {
                     }
                 } catch (ytError) {
                     console.error("YouTube Search Error:", ytError);
+                }
+            }
+
+            // 장소 검색 신호가 있으면 장소 검색 후 말풍선에 데이터 추가
+            if (data.searchPlaceKeyword) {
+                try {
+                    const placeRes = await fetch(`/api/places?q=${encodeURIComponent(data.searchPlaceKeyword)}`);
+                    const placeData = await placeRes.json();
+                    if (placeData.items && placeData.items.length > 0) {
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                placeData: placeData.items[0]
+                            };
+                            return newMessages;
+                        });
+                    }
+                } catch (placeError) {
+                    console.error("Place Search Error:", placeError);
                 }
             }
         } catch (error) {
@@ -540,7 +616,7 @@ export default function HomePage() {
                                     <span className="text-[20px] font-black tracking-tight">&nbsp;반디의 요약</span>
                                 </div>
                                 <p className="text-[18px] font-bold leading-[1.8] text-slate-800 tracking-normal min-h-[5rem] px-[10px]">
-                                    "할머니, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
+                                    "${userName}님, 오늘 기분도 좋으시고 약도 잘 챙겨 드셨네요! 산책 다녀오신 것도 정말 잘하셨어요. 대화도 많이 해서 반디가 기뻐요."
                                 </p>
                             </div>
 
@@ -649,19 +725,19 @@ export default function HomePage() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F8F6FC] animate-in fade-in duration-300">
                     <div className="bg-[#F8F6FC] w-full h-full max-w-md shadow-2xl overflow-hidden flex flex-col relative">
                         {/* Header */}
-                        <div className="p-4 sm:p-6 flex items-center justify-between relative shrink-0">
-                            <h2 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold text-brand-purple whitespace-nowrap">
-                                반디 설정
-                            </h2>
+                        {/* Header */}
+                        <div className="p-4 sm:p-6 flex items-center justify-center relative shrink-0">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors z-10"
+                                className="absolute left-4 w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors z-10"
                                 onClick={() => setIsSettingsOpen(false)}
                             >
                                 <X className="w-5 h-5 text-slate-500" />
                             </Button>
-                            <div className="w-10" /> {/* Spacer for symmetry */}
+                            <h2 className="text-xl font-bold text-brand-purple">
+                                반디 설정
+                            </h2>
                         </div>
 
                         <div className="p-5 sm:p-6 space-y-8 overflow-y-auto flex-1 hide-scrollbar bg-[#F8F6FC] pb-32">
@@ -809,33 +885,24 @@ export default function HomePage() {
                                 <p className="text-[10px] text-slate-400">© 2024 GYEOT. All rights reserved.</p>
                             </div>
                         </div>
-
-                        {/* Bottom Action Button */}
-                        <div className="p-6 bg-white/80 backdrop-blur-md border-t border-purple-100 shrink-0">
-                            <Button
-                                onClick={() => setIsSettingsOpen(false)}
-                                className="w-full h-16 rounded-full bg-brand-purple text-white text-xl font-black shadow-lg shadow-brand-purple/20 transition-all active:scale-95"
-                            >
-                                설정 완료 및 닫기
-                            </Button>
-                        </div>
                     </div>
                 </div>
             )}
 
-            {/* 숨겨진 유튜브 오디오 플레이어 */}
+            {/* 숨겨진 유튜브 오디오 플레이어 (브라우저 자동재생 정책 대응을 위해 display:none 대신 화면 밖 배치) */}
             {currentPlayingVideoId && (
-                <div style={{ display: "none" }}>
+                <div className="fixed -top-full -left-full w-1 h-1 opacity-0 pointer-events-none overflow-hidden">
                     <YouTube
                         videoId={currentPlayingVideoId}
                         opts={{
-                            width: "0",
-                            height: "0",
+                            width: "64",
+                            height: "64",
                             playerVars: {
                                 autoplay: 1,
                                 controls: 0,
                                 disablekb: 1,
                                 fs: 0,
+                                origin: typeof window !== "undefined" ? window.location.origin : "",
                             },
                         }}
                         onReady={(event) => {

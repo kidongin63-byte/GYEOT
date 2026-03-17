@@ -7,8 +7,10 @@ export async function POST(req: Request) {
     const { userId, userName, message, guardianContact } = await req.json();
 
     // 1. Gemini API 키 확인 (없으면 시뮬레이션 모드)
-    if (!process.env.GEMINI_API_KEY) {
-        console.warn("GEMINI_API_KEY가 없습니다. 시뮬레이션 모드로 응답합니다.");
+    const apiKey = (process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || "").trim();
+
+    if (!apiKey) {
+        console.warn("API 키가 없습니다. 시뮬레이션 모드로 응답합니다.");
         const simulatedResult = {
             reply: `안녕하세요 ${userName}님! 지금은 연습 모드예요. "${message}"라고 말씀하셨군요? 다정한 반디가 곧 진짜로 찾아올게요! ✨ (Gemini API 키를 설정해주세요)`,
             level: 1,
@@ -37,9 +39,9 @@ export async function POST(req: Request) {
             return `[${hTime}] ${h.sender === "user" ? (userName || "할머니") : "반디"}: ${h.message}`;
         }).join("\n");
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             generationConfig: {
                 responseMimeType: "application/json",
             }
@@ -71,9 +73,12 @@ export async function POST(req: Request) {
         - 음악 재생이 필요 없거나 아직 물어보는 단계라면 playMusicKeyword는 무조건 null로 해.
 
         [중요! 영상 시청 규칙 (NEW)]
-        - 사용자가 "보여줘", "영상 틀어줘", "스트레칭 할래", "체조 영상", "뉴스 볼래", "뮤직비디오 틀어줘", "무대 영상 보여줘" 등 화면을 **직접 시청하고 싶어하는** 의도가 명확할 때는 'showVideoKeyword'에 검색어를 담아서 보내줘. (예: "시니어 스트레칭", "임영웅 별빛 같은 나의 사랑아 뮤직비디오")
+        - 사용자가 "보여줘", "영상 틀어줘", "스트레칭 할래", "체조 영상", "뉴스 볼래", "뮤직비디오 틀어줘", "무대 영상 보여줘", "영화 보여줘" 등 화면을 **직접 시청하고 싶어하는** 의도가 명확할 때는 'showVideoKeyword'에 검색어를 담아서 보내줘. (예: "시니어 스트레칭", "임영웅 별빛 같은 나의 사랑아 뮤직비디오", "옛날 영화 명장면")
         - 노래나 라디오처럼 단순히 "들려줘", "음악 틀어줘"라고 할 때는 기존처럼 'playMusicKeyword'를 사용해 (이때는 화면 없이 배경에서 소리만 나옴).
-        - 즉, "소리(음악)"만 듣는 것은 playMusicKeyword, "화면(영상)"까지 보는 것은 showVideoKeyword야. 두 개를 동시에 채우지 말고 적절한 하나만 채워.
+        - 즉, "소리(음악)"만 듣는 것은 playMusicKeyword, "화면(영상)"까지 보는 것은 showVideoKeyword야.
+
+        [중요! 맛집 및 생활 정보 규칙 (NEW)]
+        - 사용자가 "맛집 찾아줘", "동네 맛집 어디야", "가까운 곳 추천해줘" 라고 맛집 정보를 찾을 때도 'showVideoKeyword'를 활용해 관련 지역의 맛집 탐방 영상을 추천해줘. (예: "종로구 노포 맛집 추천")
         - 영상 시청 지시가 아니면 showVideoKeyword는 무조건 null로 해.
 
         [행동 지침]
@@ -118,7 +123,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Gemini API Error:", error);
         return NextResponse.json({
-            reply: "아이구 할머니, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?",
+            reply: `아이구 ${userName || "대장"}님, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?`,
             error: error.message,
             level: 1
         }, { status: 500 });
